@@ -33,7 +33,7 @@ public class L3AutomaticTeleOp extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
-    private AlgorithmLibrary Algorithm  = new AlgorithmLibrary(hardwareMap);
+    private AlgorithmLibrary Algorithm;
 
     /** This is the variable where we store the state of our auto.
      * It is used by the pathUpdate method. */
@@ -52,10 +52,10 @@ public class L3AutomaticTeleOp extends OpMode {
     private final Pose Put2 = new Pose(10,13,Math.toRadians(0));
     //Control point between GP1 and RP1
     private final Pose GP3 = new Pose(45,13,Math.toRadians(0));
-    private final Pose RP3 = new Pose(40,8,Math.toRadians(0));
+    private final Pose RP3 = new Pose(40,7.8,Math.toRadians(0));
     private final Pose RP3Control1 = new Pose(69.8,12);
     private final Pose RP3Control2 = new Pose(61.3,7.8);
-    private final Pose Push3 = new Pose(10,8,Math.toRadians(0));
+    private final Pose Push3 = new Pose(10,7.8,Math.toRadians(0));
     private final Pose Get1 = new Pose(27,23,Math.toRadians(0));
     //Control point between RP1 and RP2
     private final Pose PutPosition = new Pose(10,23,Math.toRadians(0));
@@ -113,7 +113,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 .build();
         Intake2 = follower.pathBuilder()
                 .addPath(new BezierCurve(new Point(PutPosition),new Point(SecondIntakeControlPosition),new Point(SecondIntakePosition)))
-                .setLinearHeadingInterpolation(PutPosition.getHeading(),SecondIntakeControlPosition.getHeading())
+                .setLinearHeadingInterpolation(PutPosition.getHeading(),SecondIntakePosition.getHeading())
                 .build();
 
         PutFrom2 = follower.pathBuilder()
@@ -144,7 +144,6 @@ public class L3AutomaticTeleOp extends OpMode {
             case 0:
                 follower.followPath(scorePreload);
                 follower.update();
-                Algorithm.ArmController("Up");
                 setPathState(1);
                 break;
             case 1:
@@ -199,7 +198,7 @@ public class L3AutomaticTeleOp extends OpMode {
                     follower.followPath(Intake2);
                     follower.update();
                     counter2++;
-                    if((counter2)<5){
+                    if(counter2<5){
                         setPathState(8);
                         break;
                     }
@@ -279,11 +278,11 @@ public class L3AutomaticTeleOp extends OpMode {
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
+        Algorithm = new AlgorithmLibrary(hardwareMap);
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);
-        Algorithm.Initialize_All_For_Autonomous();
         buildPaths();
     }
 
