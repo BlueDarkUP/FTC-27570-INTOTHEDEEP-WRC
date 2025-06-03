@@ -4,10 +4,10 @@ import java.lang.Math;
 
 public class ServoKinematics {
 
-    private static final double R_CRANK_LENGTH_CM = 13.0;
-    private static final double L_CONNECTING_ROD_LENGTH_CM = 13.0;
-    private static final double H_EFFECTIVE_VERTICAL_OFFSET_CM = 5.0;
-    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -10.0;
+    private static final double R_CRANK_LENGTH_CM = 12.85;
+    private static final double L_CONNECTING_ROD_LENGTH_CM = 12.0;
+    private static final double H_EFFECTIVE_VERTICAL_OFFSET_CM = 8.5;
+    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -9.5;
 
     /**
      * 计算C点（连杆与滑轨连接点）的绝对水平X坐标（相对于A点）
@@ -90,50 +90,13 @@ public class ServoKinematics {
 
 
     public static void main(String[] args) {
-        // 测试用例1:
+        // 测试用例:
         double extension1 = 1.0;
         double angle1 = getServoRotationDegrees(extension1);
         if (!Double.isNaN(angle1)) {
             System.out.printf("目标伸出: %.2f cm, 舵机旋转: %.2f°\n", extension1, angle1);
         } else {
             System.out.printf("目标伸出: %.2f cm, 无法计算角度。\n", extension1);
-        }
-
-        // 测试用例2:
-        double extension2 = 5.0;
-        double angle2 = getServoRotationDegrees(extension2);
-        if (!Double.isNaN(angle2)) {
-            System.out.printf("目标伸出: %.2f cm, 舵机旋转: %.2f°\n", extension2, angle2);
-        } else {
-            System.out.printf("目标伸出: %.2f cm, 无法计算角度。\n", extension2);
-        }
-
-        // 测试用例3: 完全伸出
-        double extension3 = 30.0;
-        double angle3 = getServoRotationDegrees(extension3);
-        if (!Double.isNaN(angle3)) {
-            System.out.printf("目标伸出: %.2f cm, 舵机旋转: %.2f°\n", extension3, angle3);
-        } else {
-            System.out.printf("目标伸出: %.2f cm, 无法计算角度。\n", extension3);
-        }
-
-
-        // 测试用例4: 不可达的距离
-        double extension4 = 100.0;
-        double angle4 = getServoRotationDegrees(extension4);
-        if (!Double.isNaN(angle4)) {
-            System.out.printf("目标伸出: %.2f cm, 舵机旋转: %.2f°\n", extension4, angle4);
-        } else {
-            System.out.printf("目标伸出: %.2f cm, 无法计算角度。\n", extension4);
-        }
-
-        // 测试用例5:
-        double extension5 = 0.0;
-        double angle5 = getServoRotationDegrees(extension5);
-        if (!Double.isNaN(angle5)) {
-            System.out.printf("目标伸出: %.2f cm, 舵机旋转: %.2f°\n", extension5, angle5);
-        } else {
-            System.out.printf("目标伸出: %.2f cm, 无法计算角度。\n", extension5);
         }
     }
 }
