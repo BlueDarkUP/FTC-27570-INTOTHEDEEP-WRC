@@ -7,7 +7,7 @@ public class ServoKinematics {
     private static final double R_CRANK_LENGTH_CM = 12.85;
     private static final double L_CONNECTING_ROD_LENGTH_CM = 12.0;
     private static final double H_EFFECTIVE_VERTICAL_OFFSET_CM = 8.5;
-    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -9.5;
+    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -11.2;
 
     /**
      * 计算C点（连杆与滑轨连接点）的绝对水平X坐标（相对于A点）
