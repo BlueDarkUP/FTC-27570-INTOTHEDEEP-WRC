@@ -23,7 +23,7 @@ public class Degree2Pos {
         } catch (IllegalArgumentException e) {
             System.out.println("发生错误: " + e.getMessage());
         }
-        System.out.println("------------------------------");
+        System.out.println("-----------------------------");
 
         // 示例 2: reverse=True 的情况 (原始结果 6.0，归一化后 0.0)
         double positionMin2 = 10.0;
@@ -41,7 +41,7 @@ public class Degree2Pos {
         } catch (IllegalArgumentException e) {
             System.out.println("发生错误: " + e.getMessage());
         }
-        System.out.println("------------------------------");
+        System.out.println("-----------------------------");
 
         // 示例 3: 原始结果为 1.3 的情况 (归一化后 0.3)
         double positionMin3 = 0.0;
@@ -59,7 +59,7 @@ public class Degree2Pos {
         } catch (IllegalArgumentException e) {
             System.out.println("发生错误: " + e.getMessage());
         }
-        System.out.println("------------------------------");
+        System.out.println("-----------------------------");
 
         // 示例 4: 原始结果为 -0.3 的情况 (归一化后 0.7)
         double positionMin4 = 0.0;
@@ -77,7 +77,7 @@ public class Degree2Pos {
         } catch (IllegalArgumentException e) {
             System.out.println("发生错误: " + e.getMessage());
         }
-        System.out.println("------------------------------");
+        System.out.println("-----------------------------");
 
         // 示例 5: rotateAngle 为 0 导致错误的情况
         double positionMin5 = 1.0;
@@ -95,6 +95,6 @@ public class Degree2Pos {
         } catch (IllegalArgumentException e) {
             System.out.println("发生错误" + e.getMessage());
         }
-        System.out.println("------------------------------");
+        System.out.println("-----------------------------");
     }
 }

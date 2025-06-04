@@ -3,7 +3,6 @@ public class PositionCalculator {
 
     /**
      * 根据给定的参数和公式计算一个位置值，并将结果归一化到 [0, 1) 范围。
-     *
      * @param positionMin   位置的最小值。
      * @param positionMax   位置的最大值。
      * @param rotateAngle   旋转角度。
