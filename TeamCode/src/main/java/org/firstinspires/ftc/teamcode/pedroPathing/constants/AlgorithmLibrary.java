@@ -21,7 +21,7 @@ public class AlgorithmLibrary {
     public static DcMotorEx Left_Hanging_Motor = null;
     public static DcMotorEx Right_Hanging_Motor = null;
     public static DcMotorEx BigArm = null;
-    public static Servo BackArm,back_grab,forward_claw,intake_rotate,camera_arm,arm_forward,forward_slide = null,intake_spinner;
+    public static Servo BackArm,back_grab,forward_claw,intake_rotate,camera_arm,arm_forward,forward_slide,intake_spinner;
     private int MotorLastPosition;
 
 
@@ -65,15 +65,23 @@ public class AlgorithmLibrary {
 
     }
     public void Initialize_All_For_Autonomous(){
+        Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Right_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Left_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Right_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Left_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Right_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        BigArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //Initialize motor
-        InitializeLift();
-        InitializeArm();
         //Set servo position
-        back_grab.setPosition(ConstantMap.BackGrab_TightPosition);
+        back_grab.setPosition(ConstantMap.BackGrab_Initialize);
         BackArm.setPosition(ConstantMap.BACK_ARM_INITIALIZE_POSITION);
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
+        forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
     }
     public void Initialize_All_For_TeleOp() throws InterruptedException {

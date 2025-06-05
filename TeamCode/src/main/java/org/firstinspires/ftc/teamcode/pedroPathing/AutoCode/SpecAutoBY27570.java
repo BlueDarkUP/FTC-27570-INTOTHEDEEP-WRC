@@ -51,6 +51,9 @@ public class SpecAutoBY27570 extends OpMode{
             new Pose(39, 76, Math.toRadians(0)),
             new Pose(39, 73, Math.toRadians(0)),
             new Pose(39, 71, Math.toRadians(0)),
+            new Pose(39, 69, Math.toRadians(0)),
+            new Pose(39, 69, Math.toRadians(0)),
+            new Pose(39, 69, Math.toRadians(0)),
             new Pose(39, 69, Math.toRadians(0))
     };
 
@@ -92,13 +95,13 @@ public class SpecAutoBY27570 extends OpMode{
                 .addPath(new BezierCurve(new Point(Push2),new Point(GSControlP),new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(Push2.getHeading(),GetSpecPosition.getHeading())
                 .build();
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < 5; i++){
             GetSpec[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
                     .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
                     .build();
         }
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < 4; i++){
             Scoring[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose[i+1])))
                     .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose[i+1].getHeading())
@@ -122,7 +125,7 @@ public class SpecAutoBY27570 extends OpMode{
                 break;
             case 1:
                 if(!follower.isBusy()){
-                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     Specnum++;
                     follower.followPath(GetSpec[Specnum-1],true);
                     follower.update();
@@ -131,6 +134,7 @@ public class SpecAutoBY27570 extends OpMode{
                     //Algorithm.ArmController("Down");
                     if(Specnum<3) {
                         setPathState(2);
+                        break;
                     }
                     setPathState(3);
                     break;
@@ -154,7 +158,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 4:
                 if(!follower.isBusy()) {
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                    follower.followPath(GetSpec[2],true);
+                    follower.followPath(GetSpec[3],true);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
@@ -222,7 +226,7 @@ public class SpecAutoBY27570 extends OpMode{
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
-        //Algorithm.Initialize_All_For_Autonomous();
+        Algorithm.Initialize_All_For_Autonomous();
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
