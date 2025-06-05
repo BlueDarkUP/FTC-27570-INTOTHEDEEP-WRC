@@ -6,10 +6,6 @@ package org.firstinspires.ftc.teamcode.pedroPathing.constants;
  * @version 2025/5
  */
 public class ConstantMap {
-    public static final String LFMotor = "LeftFrontMotor";
-    public static final String LBMotor = "LeftBehindMotor";
-    public static final String RFMotor = "RightFrontMotor";
-    public static final String RBMotor = "RightBehindMotor";
     public static final int SleepMSAfterScoring = 600;
     //Back grab position
     public static final double BackGrab_Initialize = 0;

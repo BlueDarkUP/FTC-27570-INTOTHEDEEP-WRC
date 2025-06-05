@@ -175,8 +175,7 @@ public class SpecAutoAllVision8 extends OpMode{
         Algorithm.Initialize_All_For_Autonomous();
         GetSpec = new  PathChain[6];
         Scoring = new PathChain[7];
-        Constants.setConstants(FConstants.class, LConstants.class);
-        follower = new Follower(hardwareMap);
+        follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
     }

@@ -49,5 +49,6 @@ public class FConstants {
         FollowerConstants.pathEndTranslationalConstraint = 0.1;
         FollowerConstants.pathEndHeadingConstraint = 0.007;
 
+        FollowerConstants.turnHeadingErrorThreshold = 0.02;
     }
 }

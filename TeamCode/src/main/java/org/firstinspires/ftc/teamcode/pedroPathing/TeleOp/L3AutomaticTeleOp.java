@@ -280,8 +280,7 @@ public class L3AutomaticTeleOp extends OpMode {
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
 
-        Constants.setConstants(FConstants.class, LConstants.class);
-        follower = new Follower(hardwareMap);
+        follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
     }

@@ -229,8 +229,7 @@ public class SpecAutoBY27570 extends OpMode{
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
 
-        Constants.setConstants(FConstants.class, LConstants.class);
-        follower = new Follower(hardwareMap);
+        follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
 
         // --- 核心修复：在这里初始化数组 ---

@@ -253,8 +253,7 @@ public class SpecAutoWithPathChain extends OpMode{
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
 
-        Constants.setConstants(FConstants.class, LConstants.class);
-        follower = new Follower(hardwareMap);
+        follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
     }
