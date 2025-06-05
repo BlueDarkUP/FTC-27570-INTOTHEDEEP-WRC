@@ -117,18 +117,18 @@ public class SpecAutoBY27570 extends OpMode{
             case 0:
                 follower.followPath(scorePreload,true);
                 follower.update();
-                Algorithm.ArmController("Up");
+                //Algorithm.ArmController("Up");
                 setPathState(1);
                 break;
             case 1:
                 if(!follower.isBusy()){
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     Specnum++;
                     follower.followPath(GetSpec[Specnum-1],true);
                     follower.update();
-                    Algorithm.SlideController("Back");
+                    //Algorithm.SlideController("Back");
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController("Down");
+                    //Algorithm.ArmController("Down");
                     if(Specnum<3) {
                         setPathState(2);
                     }
@@ -137,11 +137,11 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 2:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    //Algorithm.ForwardGrabController("Open");
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
                     follower.followPath(Scoring[Specnum-1],true);
                     follower.update();
-                    Algorithm.ArmController("Up");
+                    //Algorithm.ArmController("Up");
                     setPathState(1);
                     break;
                 }
@@ -153,20 +153,20 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 4:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     follower.followPath(GetSpec[2],true);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController("Down");
+                    //Algorithm.ArmController("Down");
                     setPathState(5);
                     break;
                 }
             case 5:
                 if(!follower.isBusy()){
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
                     follower.followPath(Scoring[2],true);
                     follower.update();
-                    Algorithm.ArmController("Up");
+                    //Algorithm.ArmController("Up");
                     Specnum++;
                     if(Specnum<7) {
                         setPathState(4);
@@ -177,11 +177,11 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 6:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     follower.followPath(park,false);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController("Down");
+                    //Algorithm.ArmController("Down");
                     setPathState(-1);
                     break;
                 }
@@ -222,7 +222,7 @@ public class SpecAutoBY27570 extends OpMode{
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
-        Algorithm.Initialize_All_For_Autonomous();
+        //Algorithm.Initialize_All_For_Autonomous();
 
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);

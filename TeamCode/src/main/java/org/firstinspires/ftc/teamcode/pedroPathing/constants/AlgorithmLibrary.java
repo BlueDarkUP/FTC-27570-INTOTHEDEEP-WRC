@@ -21,7 +21,7 @@ public class AlgorithmLibrary {
     public static DcMotorEx Left_Hanging_Motor = null;
     public static DcMotorEx Right_Hanging_Motor = null;
     public static DcMotorEx BigArm = null;
-    public static Servo BackArm,back_grab,forward_claw,intake_rotate,claw_heng,arm_forward,forward_slide = null,intake_spinner;
+    public static Servo BackArm,back_grab,forward_claw,intake_rotate,camera_arm,arm_forward,forward_slide = null,intake_spinner;
     private int MotorLastPosition;
 
 
@@ -37,12 +37,12 @@ public class AlgorithmLibrary {
         intake_rotate= hardwareMap.get(Servo.class,"intake_rotate");
         back_grab = hardwareMap.get(Servo.class,"backgrab");
         intake_spinner = hardwareMap.get(Servo.class,"rotate_platform");
+        camera_arm = hardwareMap.get(Servo.class, "camera_arm");
 
         //Set motor direction
         Left_Hanging_Motor.setDirection(DcMotorSimple.Direction.REVERSE);
         Right_Hanging_Motor.setDirection(DcMotorSimple.Direction.FORWARD);
         BigArm.setDirection(DcMotorSimple.Direction.REVERSE);
-
 
 
 
