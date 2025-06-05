@@ -43,7 +43,8 @@ public class AlgorithmLibrary {
         Left_Hanging_Motor.setDirection(DcMotorSimple.Direction.REVERSE);
         Right_Hanging_Motor.setDirection(DcMotorSimple.Direction.FORWARD);
         BigArm.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        arm_forward.setDirection(Servo.Direction.REVERSE);
+        forward_slide.setDirection(Servo.Direction.REVERSE);
 
 
     }
