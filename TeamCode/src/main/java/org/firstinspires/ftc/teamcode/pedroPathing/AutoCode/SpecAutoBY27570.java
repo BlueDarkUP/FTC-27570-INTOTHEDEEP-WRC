@@ -66,8 +66,9 @@ public class SpecAutoBY27570 extends OpMode{
 
     private Path scorePreload, park;
     private PathChain Push;
-    private PathChain[] Scoring;
-    private PathChain[] GetSpec;
+    private PathChain[] Scoring; // 声明了数组，但尚未初始化（为null）
+    private PathChain[] GetSpec; // 声明了数组，但尚未初始化（为null）
+
     public void buildPaths() {
 
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
@@ -96,12 +97,14 @@ public class SpecAutoBY27570 extends OpMode{
                 .setLinearHeadingInterpolation(Push2.getHeading(),GetSpecPosition.getHeading())
                 .build();
         for(int i = 0; i < 5; i++){
+            // 之前报错的第101行：当 GetSpec 为 null 时，尝试访问 GetSpec[i] 会导致 NullPointerException
             GetSpec[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
                     .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
                     .build();
         }
         for(int i = 0; i < 4; i++){
+            // 同样，如果 Scoring 为 null，这里也会报错
             Scoring[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose[i+1])))
                     .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose[i+1].getHeading())
@@ -231,7 +234,15 @@ public class SpecAutoBY27570 extends OpMode{
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(startPose);
-        buildPaths();
+
+        // --- 核心修复：在这里初始化数组 ---
+        // GetSpec 数组在 buildPaths() 中被循环 i < 5，所以需要大小为 5
+        GetSpec = new PathChain[5];
+        // Scoring 数组在 buildPaths() 中被循环 i < 4，所以需要大小为 4
+        Scoring = new PathChain[4];
+        // ---------------------------------
+
+        buildPaths(); // 现在 buildPaths() 可以安全地为数组元素赋值了
     }
 
     /** This method is called continuously after Init while waiting for "play". **/
