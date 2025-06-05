@@ -51,10 +51,7 @@ public class SpecAutoBY27570 extends OpMode{
             new Pose(39, 76, Math.toRadians(0)),
             new Pose(39, 73, Math.toRadians(0)),
             new Pose(39, 71, Math.toRadians(0)),
-            new Pose(39, 69, Math.toRadians(0)),
-            new Pose(39, 69, Math.toRadians(0)),
-            new Pose(39, 69, Math.toRadians(0)),
-            new Pose(39, 69, Math.toRadians(0))
+            new Pose(39, 68, Math.toRadians(0)),
     };
 
 
@@ -63,6 +60,7 @@ public class SpecAutoBY27570 extends OpMode{
     private final Pose parkPose = new Pose(10, 10, Math.toRadians(0));
 
     private int Specnum = 0;
+
 
     private Path scorePreload, park;
     private PathChain Push;
@@ -96,14 +94,14 @@ public class SpecAutoBY27570 extends OpMode{
                 .addPath(new BezierCurve(new Point(Push2),new Point(GSControlP),new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(Push2.getHeading(),GetSpecPosition.getHeading())
                 .build();
-        for(int i = 0; i < 5; i++){
+        for(int i = 0; i < 4; i++){
             // 之前报错的第101行：当 GetSpec 为 null 时，尝试访问 GetSpec[i] 会导致 NullPointerException
             GetSpec[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
                     .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
                     .build();
         }
-        for(int i = 0; i < 4; i++){
+        for(int i = 0; i < 3; i++){
             // 同样，如果 Scoring 为 null，这里也会报错
             Scoring[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose[i+1])))
