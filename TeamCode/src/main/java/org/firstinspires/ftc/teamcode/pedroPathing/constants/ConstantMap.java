@@ -47,4 +47,7 @@ public class ConstantMap {
     public static final double Intake_rotate_Turned_Position = 0.35;
     public static final double Intake_spinner_Initial_Position = 0.5;
     public static final double Intake_spinner_PutDown_Position = 1;
+
+    public static final double Camera_Arm_Initialize_Position = 0;
+    public static final double Camera_Arm_PutDown_Position = 1;
 }
