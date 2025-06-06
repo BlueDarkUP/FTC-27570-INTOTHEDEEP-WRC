@@ -11,8 +11,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.API.ServoKinematics; // 导入 ServoKinematics API
-import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget; // <-- 【修改1】: 导入新的 ServoTarget 类
+import org.firstinspires.ftc.teamcode.API.ServoKinematics;
+import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -40,7 +40,6 @@ import java.util.Map;
 @TeleOp(name="WebcamExample", group="Vision")
 public class WebcamExample extends LinearOpMode {
 
-    // ... (所有常量保持不变) ...
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
     public static final int CAMERA_HEIGHT = 720;
@@ -59,7 +58,7 @@ public class WebcamExample extends LinearOpMode {
     public static final int ARC_SAMPLING_POINTS = 20;
 
 
-    public static final double DOWNSCALE_FACTOR = 1.0; //解决与MAT尺寸兼容问题
+    public static final double DOWNSCALE_FACTOR = 1.0;
     public static final double MIN_SIZE_PIXELS = 200.0;
     public static final double MAX_SIZE_PIXELS = 25000.0;
 
@@ -134,30 +133,46 @@ public class WebcamExample extends LinearOpMode {
             telemetry.addData("Cubes Detected", pipeline.latestNumberOfCubesDetected);
             telemetry.addData("Best Cube Color", pipeline.latestBestCubeColor);
             telemetry.addData("Best Cube Dist (Target)", String.format(Locale.US, "%.1f cm", pipeline.latestBestCubeDistance));
+            telemetry.addData("α (物体姿态角)", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeAngle));
+            telemetry.addData("β (目标连线角)", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeLineAngle));
 
-            // =================================================================================
-            // 【修改2】: 更新舵机计算和遥测显示
-            // =================================================================================
-            // 调用新的运动学 API
-            ServoTarget target = ServoKinematics.calculateServoTarget(pipeline.latestBestCubeDistance);
+            telemetry.addLine("--- 机械臂与舵机计算 ---");
+            // 1. 滑轨舵机 (基于距离)
+            // 调用运动学 API 计算滑轨舵机的位置
+            ServoTarget sliderTarget = ServoKinematics.calculateServoTarget(pipeline.latestBestCubeDistance);
 
-            // 检查返回值是否有效
-            if (target != null) {
-                // 如果有效，显示计算出的舵机位置和角度
-                telemetry.addData("Calculated Servo Position", String.format(Locale.US, "%.4f", target.servoPosition));
-                telemetry.addData("Calculated Servo Angle", String.format(Locale.US, "%.1f deg", target.rotationDegrees));
+            // 检查返回值是否有效并显示
+            if (sliderTarget != null) {
+                telemetry.addData("滑轨舵机 (距离) 位置", String.format(Locale.US, "%.4f", sliderTarget.servoPosition));
+                telemetry.addData("滑轨舵机 (距离) 角度", String.format(Locale.US, "%.1f deg", sliderTarget.rotationDegrees));
+                // sliderServo.setPosition(sliderTarget.servoPosition);
+            } else {
+                telemetry.addData("滑轨舵机 (距离)", "N/A (无目标或超范围)");
+            }
 
-                // 在真实比赛中，你会在这里设置舵机位置
-                // yourServo.setPosition(target.servoPosition);
+            // 2. A/B舵机 (基于角度)
+            // 检查是否检测到有效目标
+            if (!pipeline.latestBestCubeColor.equals("None")) {
+                double alpha = pipeline.latestBestCubeAngle;      // 物体自身姿态角 (α)
+                double beta = pipeline.latestBestCubeLineAngle;   // 目标连线与垂直线的夹角 (β)
+
+                // A舵机角度 = -β (用于左右对准)
+                double servoAAngle = -beta;
+
+                // B舵机角度 = α + β (用于姿态校准)
+                double servoBAngle = alpha + beta;
+
+                // 显示计算出的 A 和 B 舵机角度
+                telemetry.addData("A舵机 (偏航) 目标角度", String.format(Locale.US, "%.1f deg", servoAAngle));
+                telemetry.addData("B舵机 (校准) 目标角度", String.format(Locale.US, "%.1f deg", servoBAngle));
+
+
 
             } else {
-                // 如果距离无效 (例如太大、太小或未检测到)，显示 "N/A"
-                telemetry.addData("Calculated Servo Position", "N/A (Out of range or no target)");
-                telemetry.addData("Calculated Servo Angle", "N/A");
+                // 如果未检测到目标，则显示 "N/A"
+                telemetry.addData("A舵机 (偏航) 目标角度", "N/A (无目标)");
+                telemetry.addData("B舵机 (校准) 目标角度", "N/A (无目标)");
             }
-            // =================================================================================
-            // 【修改结束】
-            // =================================================================================
 
 
             telemetry.update();
@@ -175,8 +190,6 @@ public class WebcamExample extends LinearOpMode {
             pipeline.releaseMats();
         }
     }
-
-    // ... (SamplePipeline 类和其他内部类保持不变) ...
     static class DetectedCube {
         public String color;
         public int centerXImagePx;
@@ -647,6 +660,8 @@ public class WebcamExample extends LinearOpMode {
                         double dy = intersectionPoint.y - drawCenterOnDisplayInt.y;
 
                         if (!(Math.abs(dx) < 1e-3 && Math.abs(dy) < 1e-3)) {
+                            // atan2(dx, dy) 是计算与Y轴（垂直线）的夹角
+                            // 结果是：右侧为负, 左侧为正。
                             lineAngleDegFromVertical = Math.toDegrees(Math.atan2(dx, dy));
                         } else {
                             lineAngleDegFromVertical = 0.0;
