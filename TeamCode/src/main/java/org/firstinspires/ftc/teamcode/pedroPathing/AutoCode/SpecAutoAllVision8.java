@@ -61,7 +61,7 @@ public class SpecAutoAllVision8 extends OpMode{
         scorePreload = new Path(new BezierLine(new Point(startPose), new Point(scorePose[0])));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose[0].getHeading());
 
-        for(int i = 0; i < 6; i++){
+        for(int i = 0; i < 7; i++){
             GetSpec[i] = follower.pathBuilder()
                     .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
                     .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
@@ -173,7 +173,7 @@ public class SpecAutoAllVision8 extends OpMode{
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
-        GetSpec = new  PathChain[6];
+        GetSpec = new  PathChain[7];
         Scoring = new PathChain[7];
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
