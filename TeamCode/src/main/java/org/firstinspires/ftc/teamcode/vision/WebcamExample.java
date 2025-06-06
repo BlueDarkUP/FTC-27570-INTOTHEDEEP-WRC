@@ -41,6 +41,9 @@ import java.util.Map;
 @TeleOp(name="WebcamExample", group="Vision")
 public class WebcamExample extends LinearOpMode {
 
+    // [新增] 调试视图总开关。调试时设为 true，比赛时设为 false 以提升性能。
+    public static final boolean ENABLE_DEBUG_VIEW = true;
+
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
     public static final int CAMERA_HEIGHT = 720;
@@ -485,26 +488,36 @@ public class WebcamExample extends LinearOpMode {
                 }
                 hierarchy.release();
             }
+
+            // 识别和评分逻辑总是执行
             drawDetections(bgr, allDetectedCubes, drawScale,
                     targetZoneContourAtProcessedScale, targetZoneCenterXAtProcessedScale,
                     targetRectY1AtProcessedScale, targetRectY2AtProcessedScale,
                     PIXELS_PER_CM, targetRectY2AtOriginalScale);
 
-            TargetZoneInfo finalDisplayZoneInfo = drawTargetZoneCm(bgr, PIXELS_PER_CM,
-                    CAMERA_WIDTH, CAMERA_HEIGHT,
-                    TARGET_RECT_WIDTH_CM, TARGET_RECT_HEIGHT_CM,
-                    TARGET_RECT_OFFSET_X_CM, TARGET_RECT_OFFSET_Y_CM,
-                    TARGET_RECT_COLOR, TARGET_RECT_THICKNESS, ARC_SAMPLING_POINTS);
-            if (finalDisplayZoneInfo.centerX != null) {
-                Imgproc.line(bgr, new Point(finalDisplayZoneInfo.centerX, 0),
-                        new Point(finalDisplayZoneInfo.centerX, CAMERA_HEIGHT), TARGET_RECT_COLOR, 1);
-                if (finalDisplayZoneInfo.targetContour != null) {
-                    finalDisplayZoneInfo.targetContour.release();
+            // [修改] 只有在调试模式开启时，才绘制辅助线和网格
+            if (WebcamExample.ENABLE_DEBUG_VIEW) {
+                // 绘制目标区域
+                TargetZoneInfo finalDisplayZoneInfo = drawTargetZoneCm(bgr, PIXELS_PER_CM,
+                        CAMERA_WIDTH, CAMERA_HEIGHT,
+                        TARGET_RECT_WIDTH_CM, TARGET_RECT_HEIGHT_CM,
+                        TARGET_RECT_OFFSET_X_CM, TARGET_RECT_OFFSET_Y_CM,
+                        TARGET_RECT_COLOR, TARGET_RECT_THICKNESS, ARC_SAMPLING_POINTS);
+
+                // 绘制中心垂直线
+                if (finalDisplayZoneInfo.centerX != null) {
+                    Imgproc.line(bgr, new Point(finalDisplayZoneInfo.centerX, 0),
+                            new Point(finalDisplayZoneInfo.centerX, CAMERA_HEIGHT), TARGET_RECT_COLOR, 1);
+                    if (finalDisplayZoneInfo.targetContour != null) {
+                        finalDisplayZoneInfo.targetContour.release();
+                    }
                 }
+
+                // 绘制网格
+                int grid_size_in_pixels = (int) Math.round(5 * PIXELS_PER_CM);
+                grid_size_in_pixels = Math.max(1, grid_size_in_pixels);
+                drawGridOverlay(bgr, grid_size_in_pixels, GRID_COLOR, 1);
             }
-            int grid_size_in_pixels = (int) Math.round(5 * PIXELS_PER_CM);
-            grid_size_in_pixels = Math.max(1, grid_size_in_pixels);
-            drawGridOverlay(bgr, grid_size_in_pixels, GRID_COLOR, 1);
 
             Imgproc.cvtColor(bgr, inputRGBA, Imgproc.COLOR_BGR2RGBA);
 
@@ -528,6 +541,10 @@ public class WebcamExample extends LinearOpMode {
             return scaledPoints;
         }
         private void drawGridOverlay(Mat frame, int grid_size_px, Scalar color, int thickness) {
+            // [修改] 如果关闭调试视图，直接返回，不执行任何绘制
+            if (!WebcamExample.ENABLE_DEBUG_VIEW) {
+                return;
+            }
             int h = frame.rows();
             int w = frame.cols();
             if (grid_size_px < 1) grid_size_px = 1;
@@ -569,7 +586,10 @@ public class WebcamExample extends LinearOpMode {
 
             int arc_b_center_y = y2_bottom_edge;
             if (arc_radius_px > 0) {
-                Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_b_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
+                // [修改] 将绘图操作包裹在调试开关内
+                if (WebcamExample.ENABLE_DEBUG_VIEW) {
+                    Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_b_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
+                }
                 for (int i = 0; i <= arc_points_sampling; i++) {
                     double angle_rad = Math.toRadians(360 - (i * 180.0 / arc_points_sampling));
                     int pt_x = rect_center_x_px + (int) Math.round(arc_radius_px * Math.cos(angle_rad));
@@ -580,14 +600,20 @@ public class WebcamExample extends LinearOpMode {
                 contour_points.add(new Point(x2, y2_bottom_edge));
                 contour_points.add(new Point(x1, y2_bottom_edge));
             }
-            Imgproc.line(frame, new Point(x1, y1_top_edge), new Point(x1, y2_bottom_edge), color, thickness);
+            // [修改] 将绘图操作包裹在调试开关内
+            if (WebcamExample.ENABLE_DEBUG_VIEW) {
+                Imgproc.line(frame, new Point(x1, y1_top_edge), new Point(x1, y2_bottom_edge), color, thickness);
+            }
             if (!contour_points.isEmpty() && (contour_points.get(contour_points.size() - 1).x != x1 || contour_points.get(contour_points.size() - 1).y != y2_bottom_edge)) {
                 contour_points.add(new Point(x1, y2_bottom_edge));
             }
             contour_points.add(new Point(x1, y1_top_edge));
             int arc_a_center_y = y1_top_edge;
             if (arc_radius_px > 0) {
-                Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_a_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
+                // [修改] 将绘图操作包裹在调试开关内
+                if (WebcamExample.ENABLE_DEBUG_VIEW) {
+                    Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_a_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
+                }
                 for (int i = 0; i <= arc_points_sampling; i++) {
                     double angle_rad = Math.toRadians(180 + (i * 180.0 / arc_points_sampling));
                     int pt_x = rect_center_x_px + (int) Math.round(arc_radius_px * Math.cos(angle_rad));
@@ -597,7 +623,10 @@ public class WebcamExample extends LinearOpMode {
             } else {
                 contour_points.add(new Point(x2, y1_top_edge));
             }
-            Imgproc.line(frame, new Point(x2, y1_top_edge), new Point(x2, y2_bottom_edge), color, thickness);
+            // [修改] 将绘图操作包裹在调试开关内
+            if (WebcamExample.ENABLE_DEBUG_VIEW) {
+                Imgproc.line(frame, new Point(x2, y1_top_edge), new Point(x2, y2_bottom_edge), color, thickness);
+            }
             if (!contour_points.isEmpty() && (contour_points.get(contour_points.size() - 1).x != x2 || contour_points.get(contour_points.size() - 1).y != y1_top_edge)) {
                 contour_points.add(new Point(x2, y1_top_edge));
             }
@@ -613,6 +642,7 @@ public class WebcamExample extends LinearOpMode {
                                     MatOfPoint targetZoneContourProcessed, Integer targetZoneCenterXAtProcessedScale,
                                     Integer targetRectY1Processed, Integer targetRectY2Processed,
                                     double originalPixelsPerCm, double targetRectY2OriginalScale) {
+
             if (cubes.isEmpty()) {
                 latestBestCubeColor = "None";
                 latestBestCubeAngle = 0.0;
@@ -764,7 +794,13 @@ public class WebcamExample extends LinearOpMode {
                 latestBestCubeAngle = 0.0;
                 latestBestCubeDistance = Double.POSITIVE_INFINITY;
                 latestBestCubeLineAngle = 0.0;
-                latestNumberOfCubesDetected = 0;
+                latestNumberOfCubesDetected = cubes.size(); // [修正一个小bug] 即使没有best cube，也应该报告检测到的总数
+            }
+
+
+            // [修改] 仅当调试视图开启时，才执行下面的所有绘图操作
+            if (!WebcamExample.ENABLE_DEBUG_VIEW) {
+                return; // 如果关闭调试，则直接返回，不绘制任何东西
             }
 
             for (Map<String, Object> candidateData : candidateCubesWithScores) {
@@ -881,5 +917,4 @@ public class WebcamExample extends LinearOpMode {
             if (targetZoneContourAtProcessedScaleHolder != null) targetZoneContourAtProcessedScaleHolder.release();
         }
     }
-
 }
