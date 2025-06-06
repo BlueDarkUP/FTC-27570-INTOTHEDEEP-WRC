@@ -717,18 +717,17 @@ public class WebcamExample extends LinearOpMode {
                             lineAngleDegFromVertical = 0.0;
                         }
 
-                        if (targetBottomYOnDisplay != -1 && originalPixelsPerCm > 0) {
-                            double intersectYOrigScale = intersectionPoint.y / drawScaleToDisplay;
-                            if (DOWNSCALE_FACTOR > 0 && DOWNSCALE_FACTOR < 1.0) {
-                                intersectYOrigScale = intersectYOrigScale / DOWNSCALE_FACTOR;
-                            }
+                        if (intersectionPoint != null && targetRectY2OriginalScale != -1 && originalPixelsPerCm > 0) {
+                            double distPxOriginalImg = targetRectY2OriginalScale - intersectionPoint.y;
 
-                            if (targetRectY2OriginalScale != -1) {
-                                double distPxOriginalImg = targetRectY2OriginalScale - intersectYOrigScale;
+                            // 只有当交点在目标区上方时，距离才有效
+                            if (distPxOriginalImg >= 0) {
                                 distToBottomCm = distPxOriginalImg / originalPixelsPerCm;
                             } else {
                                 distToBottomCm = Double.POSITIVE_INFINITY;
                             }
+                        } else {
+                            distToBottomCm = Double.POSITIVE_INFINITY;
                         }
                     }
                 }
