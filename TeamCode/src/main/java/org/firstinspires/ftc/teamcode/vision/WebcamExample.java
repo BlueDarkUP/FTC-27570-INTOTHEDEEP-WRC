@@ -236,14 +236,14 @@ public class WebcamExample extends LinearOpMode {
         }
     }
 
-    // [新增] 用于替代HashMap的POJO类，存储候选对象的信息和评分
+    // 用于替代HashMap的POJO类，存储候选对象的信息和评分
     static class CandidateInfo {
         int cubeIndex;
         double primaryScore; // 主要评分（距离）
         double secondaryScore; // 次要评分（角度和）
         double lineAngleDeg; // 连线角度
-        Point drawCenter; // 绘制中心点
-        Point intersectionPoint; // 交点
+        Point centerInProcessed; // 在处理坐标系下的中心点
+        Point intersectionPointProcessed; // 在处理坐标系下的交点
         double distanceCm; // 计算出的距离
     }
 
@@ -505,8 +505,8 @@ public class WebcamExample extends LinearOpMode {
                 hierarchy.release();
             }
 
-            // 识别和评分逻辑总是执行
-            drawDetections(bgr, allDetectedCubes, drawScale,
+            // 增加 processingScale 参数传递
+            drawDetections(bgr, allDetectedCubes, drawScale, processingScale,
                     targetZoneContourAtProcessedScale, targetZoneCenterXAtProcessedScale,
                     targetRectY1AtProcessedScale, targetRectY2AtProcessedScale,
                     PIXELS_PER_CM, targetRectY2AtOriginalScale);
@@ -654,7 +654,8 @@ public class WebcamExample extends LinearOpMode {
             return new TargetZoneInfo(final_contour, rect_center_x_px, y1_top_edge, y2_bottom_edge);
         }
 
-        private void drawDetections(Mat displayOutput, List<DetectedCube> cubes, double drawScaleToDisplay,
+        // 增加 processingScale 参数
+        private void drawDetections(Mat displayOutput, List<DetectedCube> cubes, double drawScaleToDisplay, double processingScale,
                                     MatOfPoint targetZoneContourProcessed, Integer targetZoneCenterXAtProcessedScale,
                                     Integer targetRectY1Processed, Integer targetRectY2Processed,
                                     double originalPixelsPerCm, double targetRectY2OriginalScale) {
@@ -669,111 +670,103 @@ public class WebcamExample extends LinearOpMode {
                 return;
             }
 
-            double circleRadiusPxAtDisplayScale = (TARGET_RECT_WIDTH_CM / 2.0) * originalPixelsPerCm * drawScaleToDisplay;
-
-            // [修改] 使用新的POJO类 CandidateInfo 替代 HashMap
+            // 使用新的POJO类 CandidateInfo 存储所有候选信息
             ArrayList<CandidateInfo> candidateCubesWithScores = new ArrayList<>();
 
-            double targetBottomYOnDisplay = -1;
-            if (targetRectY2Processed != null) {
-                targetBottomYOnDisplay = Math.round(targetRectY2Processed * drawScaleToDisplay);
-            } else if (targetRectY2OriginalScale != -1 && Math.abs(drawScaleToDisplay - 1.0) < 1e-3) {
-                targetBottomYOnDisplay = targetRectY2OriginalScale;
-            }
+            // 所有计算都基于 processing (处理) 坐标系
+            // 在处理坐标系下，虚拟圆的半径
+            double circleRadiusProcessed = (TARGET_RECT_WIDTH_CM / 2.0) * originalPixelsPerCm * processingScale;
 
             for (int i = 0; i < cubes.size(); i++) {
                 DetectedCube cube = cubes.get(i);
-                Point centerInProcessedCoords = new Point(cube.centerXImagePx, cube.centerYImagePx);
+                // 物体中心点，已经在处理坐标系下
+                Point centerInProcessed = new Point(cube.centerXImagePx, cube.centerYImagePx);
 
-                Point drawCenterOnDisplayInt = scalePoint(centerInProcessedCoords, drawScaleToDisplay);
-
-                Point intersectionPoint = null;
+                Point intersectionPointProcessed = null;
                 double lineAngleDegFromVertical = 0.0;
                 double distToBottomCm = Double.POSITIVE_INFINITY;
 
-                if (targetZoneCenterXAtProcessedScale != null && circleRadiusPxAtDisplayScale > 0) {
-                    int lineXAtDisplayScale = (int) Math.round(targetZoneCenterXAtProcessedScale * drawScaleToDisplay);
-                    double h = drawCenterOnDisplayInt.x;
-                    double k = drawCenterOnDisplayInt.y;
-                    double r = circleRadiusPxAtDisplayScale;
+                if (targetZoneCenterXAtProcessedScale != null && circleRadiusProcessed > 0) {
+                    // 中心线 X 坐标，已在处理坐标系下
+                    int lineXProcessed = targetZoneCenterXAtProcessedScale;
 
-                    double distToLine = Math.abs(lineXAtDisplayScale - h);
+                    double h = centerInProcessed.x; // 物体中心 X (在处理坐标系下)
+                    double k = centerInProcessed.y; // 物体中心 Y (在处理坐标系下)
+                    double r = circleRadiusProcessed; // 圆半径 (在处理坐标系下)
 
+                    double distToLine = Math.abs(lineXProcessed - h);
+
+                    // 判断是否相交
                     if (distToLine <= r + 1) {
                         double sqrtValSquared = r * r - distToLine * distToLine;
                         double sqrtVal = Math.sqrt(Math.max(0, sqrtValSquared));
                         double y1Intersect = k - sqrtVal;
                         double y2Intersect = k + sqrtVal;
 
-                        double intersectionY = Math.max(y1Intersect, y2Intersect);
-                        intersectionPoint = new Point(lineXAtDisplayScale, Math.round(intersectionY));
+                        double intersectionYProcessed = Math.max(y1Intersect, y2Intersect);
+                        intersectionPointProcessed = new Point(lineXProcessed, Math.round(intersectionYProcessed));
 
-                        double dx = intersectionPoint.x - drawCenterOnDisplayInt.x;
-                        double dy = intersectionPoint.y - drawCenterOnDisplayInt.y;
+                        // 计算连线角度
+                        double dx = intersectionPointProcessed.x - centerInProcessed.x;
+                        double dy = intersectionPointProcessed.y - centerInProcessed.y;
+                        lineAngleDegFromVertical = (Math.abs(dx) < 1e-3 && Math.abs(dy) < 1e-3) ? 0.0 : Math.toDegrees(Math.atan2(dx, dy));
 
-                        if (!(Math.abs(dx) < 1e-3 && Math.abs(dy) < 1e-3)) {
-                            lineAngleDegFromVertical = Math.toDegrees(Math.atan2(dx, dy));
-                        } else {
-                            lineAngleDegFromVertical = 0.0;
-                        }
-
-                        if (intersectionPoint != null && targetRectY2OriginalScale != -1 && originalPixelsPerCm > 0) {
-                            double distPxOriginalImg = targetRectY2OriginalScale - intersectionPoint.y;
-
-                            // 只有当交点在目标区上方时，距离才有效
+                        // 计算距离
+                        if (targetRectY2OriginalScale != -1 && originalPixelsPerCm > 0) {
+                            // 1. 将处理坐标系下的交点Y，转换回原始坐标系下的Y
+                            double intersectYOriginalScale = intersectionPointProcessed.y / processingScale;
+                            // 2. 用原始坐标系下的Y坐标计算像素距离
+                            double distPxOriginalImg = targetRectY2OriginalScale - intersectYOriginalScale;
+                            // 3. 只有当交点在目标区上方时，距离才有效
                             if (distPxOriginalImg >= 0) {
                                 distToBottomCm = distPxOriginalImg / originalPixelsPerCm;
-                            } else {
-                                distToBottomCm = Double.POSITIVE_INFINITY;
                             }
-                        } else {
-                            distToBottomCm = Double.POSITIVE_INFINITY;
                         }
                     }
                 }
 
+                // --- 候选区域有效性判断 ---
                 boolean validCandidate = true;
                 if (targetZoneContourProcessed != null && !targetZoneContourProcessed.empty()) {
                     targetZoneContourProcessed.convertTo(tempContour2f, CvType.CV_32F);
-                    if (Imgproc.pointPolygonTest(tempContour2f, centerInProcessedCoords, false) < 0) {
+                    if (Imgproc.pointPolygonTest(tempContour2f, centerInProcessed, false) < 0) {
                         validCandidate = false;
                     }
                 }
 
                 if (validCandidate && targetRectY1Processed != null && targetRectY2Processed != null) {
-                    if (intersectionPoint == null) {
+                    if (intersectionPointProcessed == null) {
                         validCandidate = false;
                     } else {
-                        int scaledTargetY1Display = (int) Math.round(targetRectY1Processed * drawScaleToDisplay);
-                        int scaledTargetY2Display = (int) Math.round(targetRectY2Processed * drawScaleToDisplay);
-                        if (!(scaledTargetY1Display <= intersectionPoint.y && intersectionPoint.y <= scaledTargetY2Display)) {
+                        // 检查交点是否在处理坐标系下的Y范围内
+                        if (!(targetRectY1Processed <= intersectionPointProcessed.y && intersectionPointProcessed.y <= targetRectY2Processed)) {
                             validCandidate = false;
                         }
                     }
                 }
 
+                // --- 创建候选对象 ---
                 if (validCandidate) {
                     double objAForScore = Math.abs(cube.angleDeg - 90.0);
                     double lineAngleAbsForScore = Math.abs(lineAngleDegFromVertical);
                     double secondaryScore = objAForScore + lineAngleAbsForScore;
 
-                    // [修改] 使用 CandidateInfo 对象替代 HashMap
                     CandidateInfo candidateData = new CandidateInfo();
                     candidateData.cubeIndex = i;
                     candidateData.primaryScore = distToBottomCm;
                     candidateData.secondaryScore = secondaryScore;
                     candidateData.lineAngleDeg = lineAngleDegFromVertical;
-                    candidateData.drawCenter = drawCenterOnDisplayInt;
-                    candidateData.intersectionPoint = intersectionPoint;
+                    candidateData.centerInProcessed = centerInProcessed;
+                    candidateData.intersectionPointProcessed = intersectionPointProcessed;
                     candidateData.distanceCm = distToBottomCm;
 
                     candidateCubesWithScores.add(candidateData);
                 }
             }
 
+            // --- 评分与选择最佳目标 ---
             int bestCubeOriginalIndex = -1;
             if (!candidateCubesWithScores.isEmpty()) {
-                // [修改] 更新排序比较器以使用 CandidateInfo 字段
                 Collections.sort(candidateCubesWithScores, (a, b) -> {
                     if (a.primaryScore != b.primaryScore) {
                         return Double.compare(a.primaryScore, b.primaryScore);
@@ -786,119 +779,110 @@ public class WebcamExample extends LinearOpMode {
                 }
             }
 
+            // --- 更新最新结果 ---
             if (bestCubeOriginalIndex != -1) {
                 DetectedCube bestCube = cubes.get(bestCubeOriginalIndex);
                 CandidateInfo bestCandidateData = null;
-                // [修改] 更新查找最佳候选对象的方式
                 for (CandidateInfo data : candidateCubesWithScores) {
                     if (data.cubeIndex == bestCubeOriginalIndex) {
                         bestCandidateData = data;
                         break;
                     }
                 }
-
                 if (bestCandidateData != null) {
                     latestBestCubeColor = bestCube.color;
                     latestBestCubeAngle = bestCube.angleDeg;
                     latestBestCubeDistance = bestCandidateData.distanceCm;
                     latestBestCubeLineAngle = bestCandidateData.lineAngleDeg;
-                    latestNumberOfCubesDetected = cubes.size();
                 }
             } else {
                 latestBestCubeColor = "None";
                 latestBestCubeAngle = 0.0;
                 latestBestCubeDistance = Double.POSITIVE_INFINITY;
                 latestBestCubeLineAngle = 0.0;
-                latestNumberOfCubesDetected = cubes.size();
             }
+            latestNumberOfCubesDetected = cubes.size();
 
-            // 仅当调试视图开启时，才执行下面的所有绘图操作
+
+            // ------------------ 绘图开始 (仅在调试模式下) ------------------
             if (!WebcamExample.ENABLE_DEBUG_VIEW) {
                 return; // 如果关闭调试，则直接返回，不绘制任何东西
             }
 
-            // [修改] 遍历 CandidateInfo 列表并使用其字段进行绘制
             for (CandidateInfo candidateData : candidateCubesWithScores) {
                 int currentCubeOriginalIndex = candidateData.cubeIndex;
                 DetectedCube cubeToDraw = cubes.get(currentCubeOriginalIndex);
 
-                Scalar boxColorToUse;
-                if (currentCubeOriginalIndex == bestCubeOriginalIndex) {
-                    boxColorToUse = BOX_COLOR_SELECTED_BEST;
-                } else {
-                    boxColorToUse = BOX_COLOR_DEFAULT;
-                }
+                Scalar boxColorToUse = (currentCubeOriginalIndex == bestCubeOriginalIndex) ? BOX_COLOR_SELECTED_BEST : BOX_COLOR_DEFAULT;
 
-                // 从 CandidateInfo 对象中获取数据
-                Point drawCenterOnDisplayInt = candidateData.drawCenter;
-                Point intersectionPointToDraw = candidateData.intersectionPoint;
-                double lineAngleToDisplay = candidateData.lineAngleDeg;
-                double distCmToDisplay = candidateData.distanceCm;
+                // *** 修改点: 所有绘图点都从处理坐标系放大到显示坐标系 ***
+                Point drawCenterOnDisplay = scalePoint(candidateData.centerInProcessed, drawScaleToDisplay);
+                Point intersectionPointToDraw = scalePoint(candidateData.intersectionPointProcessed, drawScaleToDisplay);
 
+                // 绘制物体边界框
                 tempScaledBoxPointsForDisplay.fromList(Arrays.asList(scaleRectPoints(cubeToDraw.boundingBoxPoints, drawScaleToDisplay)));
                 Imgproc.drawContours(displayOutput, Arrays.asList(tempScaledBoxPointsForDisplay), 0, boxColorToUse, 2);
 
-                Imgproc.circle(displayOutput, drawCenterOnDisplayInt, 4, BLOCK_CENTER_CIRCLE_COLOR, -1);
+                // 绘制物体中心点
+                Imgproc.circle(displayOutput, drawCenterOnDisplay, 4, BLOCK_CENTER_CIRCLE_COLOR, -1);
 
+                // --- 准备绘制文字所需的位置信息 ---
                 double min_x_on_display = Double.POSITIVE_INFINITY;
                 double min_y_on_display = Double.POSITIVE_INFINITY;
                 double max_y_on_display = Double.NEGATIVE_INFINITY;
-                for (Point p : scaleRectPoints(cubeToDraw.boundingBoxPoints, drawScaleToDisplay)) {
+                // 注意这里是对已经缩放过的点进行遍历
+                for (Point p : tempScaledBoxPointsForDisplay.toArray()) {
                     min_x_on_display = Math.min(min_x_on_display, p.x);
                     min_y_on_display = Math.min(min_y_on_display, p.y);
                     max_y_on_display = Math.max(max_y_on_display, p.y);
                 }
 
+                // --- 绘制各种信息文本 ---
                 int fontHeightApprox = 15;
                 int textYColor = (int) min_y_on_display - 50;
                 int textYObjA = (int) min_y_on_display - 35;
                 int textYScore = (int) min_y_on_display - 20;
                 int textYDist = (int) min_y_on_display - 5;
-
-                if (textYDist < fontHeightApprox) {
+                if (textYDist < fontHeightApprox) { // 防止文字画到屏幕外
                     textYColor = (int) max_y_on_display + fontHeightApprox;
                     textYObjA = textYColor + fontHeightApprox;
                     textYScore = textYObjA + fontHeightApprox;
                     textYDist = textYScore + fontHeightApprox;
                 }
 
-                Imgproc.putText(displayOutput, cubeToDraw.color, new Point(min_x_on_display, textYColor), Imgproc.FONT_HERSHEY_SIMPLEX, 0.5,
-                        boxColorToUse, 1);
-                Imgproc.putText(displayOutput, String.format(Locale.US, "ObjA:%.1f", cubeToDraw.angleDeg), new Point(min_x_on_display, textYObjA),
-                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
-                Imgproc.putText(displayOutput, String.format(Locale.US, "S2:%.1f", candidateData.secondaryScore), new Point(min_x_on_display, textYScore),
-                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
-                if (distCmToDisplay != Double.POSITIVE_INFINITY) {
-                    Imgproc.putText(displayOutput, String.format(Locale.US, "Dist:%.1fcm", distCmToDisplay), new Point(min_x_on_display, textYDist),
-                            Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, DISTANCE_TEXT_COLOR, 1);
+                Imgproc.putText(displayOutput, cubeToDraw.color, new Point(min_x_on_display, textYColor), Imgproc.FONT_HERSHEY_SIMPLEX, 0.5, boxColorToUse, 1);
+                Imgproc.putText(displayOutput, String.format(Locale.US, "ObjA:%.1f", cubeToDraw.angleDeg), new Point(min_x_on_display, textYObjA), Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
+                Imgproc.putText(displayOutput, String.format(Locale.US, "S2:%.1f", candidateData.secondaryScore), new Point(min_x_on_display, textYScore), Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
+                if (candidateData.distanceCm != Double.POSITIVE_INFINITY) {
+                    Imgproc.putText(displayOutput, String.format(Locale.US, "Dist:%.1fcm", candidateData.distanceCm), new Point(min_x_on_display, textYDist), Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, DISTANCE_TEXT_COLOR, 1);
                 }
 
-                if (circleRadiusPxAtDisplayScale > 0) {
-                    Imgproc.circle(displayOutput, drawCenterOnDisplayInt, (int) Math.round(circleRadiusPxAtDisplayScale),
-                            BLOCK_CENTER_CIRCLE_COLOR, 1);
+                // --- 绘制辅助几何图形 ---
+                // 在显示坐标系下，虚拟圆的半径
+                double circleRadiusDisplay = circleRadiusProcessed * drawScaleToDisplay;
+                if (circleRadiusDisplay > 0) {
+                    Imgproc.circle(displayOutput, drawCenterOnDisplay, (int) Math.round(circleRadiusDisplay), BLOCK_CENTER_CIRCLE_COLOR, 1);
                 }
 
                 if (intersectionPointToDraw != null) {
+                    // 绘制交点和连线
                     Imgproc.circle(displayOutput, intersectionPointToDraw, 5, INTERSECTION_POINT_COLOR, -1);
-                    Imgproc.line(displayOutput, drawCenterOnDisplayInt, intersectionPointToDraw,
-                            CENTER_TO_INTERSECTION_LINE_COLOR, 1);
+                    Imgproc.line(displayOutput, drawCenterOnDisplay, intersectionPointToDraw, CENTER_TO_INTERSECTION_LINE_COLOR, 1);
 
-                    String angleText = String.format(Locale.US, "LA:%.1f", lineAngleToDisplay);
-                    int midXLine = (int) ((drawCenterOnDisplayInt.x + intersectionPointToDraw.x) / 2);
-                    int midYLine = (int) ((drawCenterOnDisplayInt.y + intersectionPointToDraw.y) / 2);
-
+                    // 绘制连线角度文字
+                    String angleText = String.format(Locale.US, "LA:%.1f", candidateData.lineAngleDeg);
+                    int midXLine = (int) ((drawCenterOnDisplay.x + intersectionPointToDraw.x) / 2);
+                    int midYLine = (int) ((drawCenterOnDisplay.y + intersectionPointToDraw.y) / 2);
                     int textOffsetX = 7;
-                    double dxLine = intersectionPointToDraw.x - drawCenterOnDisplayInt.x;
-                    if (dxLine < 0) {
-                        int[] textSizes = new int[1];
-                        Size textSize = Imgproc.getTextSize(angleText, Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, 1, textSizes);
+                    if (intersectionPointToDraw.x - drawCenterOnDisplay.x < 0) {
+                        Size textSize = Imgproc.getTextSize(angleText, Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, 1, new int[1]);
                         textOffsetX = -7 - (int) textSize.width;
                     }
-                    Imgproc.putText(displayOutput, angleText, new Point(midXLine + textOffsetX, midYLine - 5),
-                            Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, ANGLE_TEXT_COLOR, 1, Imgproc.LINE_AA);
+                    Imgproc.putText(displayOutput, angleText, new Point(midXLine + textOffsetX, midYLine - 5), Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, ANGLE_TEXT_COLOR, 1, Imgproc.LINE_AA);
                 }
             }
         }
+
 
         @Override
         public void onViewportTapped() {
