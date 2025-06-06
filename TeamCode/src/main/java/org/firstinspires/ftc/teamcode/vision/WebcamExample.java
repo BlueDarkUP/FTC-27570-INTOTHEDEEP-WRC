@@ -41,7 +41,7 @@ import java.util.Map;
 @TeleOp(name="WebcamExample", group="Vision")
 public class WebcamExample extends LinearOpMode {
 
-    // [新增] 调试视图总开关。调试时设为 true，比赛时设为 false 以提升性能。
+    // 调试视图总开关。调试时设为 true，比赛时设为 false 以提升性能。
     public static final boolean ENABLE_DEBUG_VIEW = true;
 
     public static final String WEBCAM_NAME_STR = "Webcam";
@@ -236,6 +236,18 @@ public class WebcamExample extends LinearOpMode {
         }
     }
 
+    // [新增] 用于替代HashMap的POJO类，存储候选对象的信息和评分
+    static class CandidateInfo {
+        int cubeIndex;
+        double primaryScore; // 主要评分（距离）
+        double secondaryScore; // 次要评分（角度和）
+        double lineAngleDeg; // 连线角度
+        Point drawCenter; // 绘制中心点
+        Point intersectionPoint; // 交点
+        double distanceCm; // 计算出的距离
+    }
+
+
     class SamplePipeline extends OpenCvPipeline {
         private Mat bgr;
         private Mat hsv;
@@ -399,7 +411,11 @@ public class WebcamExample extends LinearOpMode {
 
                 Imgproc.distanceTransform(opened, distTransform, Imgproc.DIST_L2, 5);
                 Core.MinMaxLocResult mmr = Core.minMaxLoc(distTransform);
+
+
                 double distThreshold = 0.57 * mmr.maxVal;
+
+
                 Imgproc.threshold(distTransform, sureFg, distThreshold, 255, Imgproc.THRESH_BINARY);
                 sureFg.convertTo(sureFg, CvType.CV_8U);
 
@@ -495,9 +511,9 @@ public class WebcamExample extends LinearOpMode {
                     targetRectY1AtProcessedScale, targetRectY2AtProcessedScale,
                     PIXELS_PER_CM, targetRectY2AtOriginalScale);
 
-            // [修改] 只有在调试模式开启时，才绘制辅助线和网格
+            // 只有在调试模式开启时，才绘制辅助线和网格
             if (WebcamExample.ENABLE_DEBUG_VIEW) {
-                // 绘制目标区域
+                // 绘制目标区域（此函数内部已处理调试开关，此处调用是为了获取返回值）
                 TargetZoneInfo finalDisplayZoneInfo = drawTargetZoneCm(bgr, PIXELS_PER_CM,
                         CAMERA_WIDTH, CAMERA_HEIGHT,
                         TARGET_RECT_WIDTH_CM, TARGET_RECT_HEIGHT_CM,
@@ -541,7 +557,7 @@ public class WebcamExample extends LinearOpMode {
             return scaledPoints;
         }
         private void drawGridOverlay(Mat frame, int grid_size_px, Scalar color, int thickness) {
-            // [修改] 如果关闭调试视图，直接返回，不执行任何绘制
+            // 如果关闭调试视图，直接返回，不执行任何绘制
             if (!WebcamExample.ENABLE_DEBUG_VIEW) {
                 return;
             }
@@ -586,7 +602,7 @@ public class WebcamExample extends LinearOpMode {
 
             int arc_b_center_y = y2_bottom_edge;
             if (arc_radius_px > 0) {
-                // [修改] 将绘图操作包裹在调试开关内
+                // 将绘图操作包裹在调试开关内
                 if (WebcamExample.ENABLE_DEBUG_VIEW) {
                     Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_b_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
                 }
@@ -600,7 +616,7 @@ public class WebcamExample extends LinearOpMode {
                 contour_points.add(new Point(x2, y2_bottom_edge));
                 contour_points.add(new Point(x1, y2_bottom_edge));
             }
-            // [修改] 将绘图操作包裹在调试开关内
+            // 将绘图操作包裹在调试开关内
             if (WebcamExample.ENABLE_DEBUG_VIEW) {
                 Imgproc.line(frame, new Point(x1, y1_top_edge), new Point(x1, y2_bottom_edge), color, thickness);
             }
@@ -610,7 +626,7 @@ public class WebcamExample extends LinearOpMode {
             contour_points.add(new Point(x1, y1_top_edge));
             int arc_a_center_y = y1_top_edge;
             if (arc_radius_px > 0) {
-                // [修改] 将绘图操作包裹在调试开关内
+                // 将绘图操作包裹在调试开关内
                 if (WebcamExample.ENABLE_DEBUG_VIEW) {
                     Imgproc.ellipse(frame, new Point(rect_center_x_px, arc_a_center_y), new Size(arc_radius_px, arc_radius_px), 0, 180, 360, color, thickness);
                 }
@@ -623,7 +639,7 @@ public class WebcamExample extends LinearOpMode {
             } else {
                 contour_points.add(new Point(x2, y1_top_edge));
             }
-            // [修改] 将绘图操作包裹在调试开关内
+            // 将绘图操作包裹在调试开关内
             if (WebcamExample.ENABLE_DEBUG_VIEW) {
                 Imgproc.line(frame, new Point(x2, y1_top_edge), new Point(x2, y2_bottom_edge), color, thickness);
             }
@@ -643,6 +659,7 @@ public class WebcamExample extends LinearOpMode {
                                     Integer targetRectY1Processed, Integer targetRectY2Processed,
                                     double originalPixelsPerCm, double targetRectY2OriginalScale) {
 
+            // ------------------ 计算和评分开始 ------------------
             if (cubes.isEmpty()) {
                 latestBestCubeColor = "None";
                 latestBestCubeAngle = 0.0;
@@ -652,10 +669,11 @@ public class WebcamExample extends LinearOpMode {
                 return;
             }
 
-
             double circleRadiusPxAtDisplayScale = (TARGET_RECT_WIDTH_CM / 2.0) * originalPixelsPerCm * drawScaleToDisplay;
 
-            ArrayList<Map<String, Object>> candidateCubesWithScores = new ArrayList<>();
+            // [修改] 使用新的POJO类 CandidateInfo 替代 HashMap
+            ArrayList<CandidateInfo> candidateCubesWithScores = new ArrayList<>();
+
             double targetBottomYOnDisplay = -1;
             if (targetRectY2Processed != null) {
                 targetBottomYOnDisplay = Math.round(targetRectY2Processed * drawScaleToDisplay);
@@ -694,8 +712,6 @@ public class WebcamExample extends LinearOpMode {
                         double dy = intersectionPoint.y - drawCenterOnDisplayInt.y;
 
                         if (!(Math.abs(dx) < 1e-3 && Math.abs(dy) < 1e-3)) {
-                            // atan2(dx, dy) 是计算与Y轴（垂直线）的夹角
-                            // 结果是：右侧为负, 左侧为正。
                             lineAngleDegFromVertical = Math.toDegrees(Math.atan2(dx, dy));
                         } else {
                             lineAngleDegFromVertical = 0.0;
@@ -742,41 +758,41 @@ public class WebcamExample extends LinearOpMode {
                     double lineAngleAbsForScore = Math.abs(lineAngleDegFromVertical);
                     double secondaryScore = objAForScore + lineAngleAbsForScore;
 
-                    Map<String, Object> candidateData = new HashMap<>();
-                    candidateData.put("cube_index", i);
-                    candidateData.put("primary_score", distToBottomCm);
-                    candidateData.put("secondary_score", secondaryScore);
-                    candidateData.put("line_angle_deg_display", lineAngleDegFromVertical);
-                    candidateData.put("draw_center", drawCenterOnDisplayInt);
-                    candidateData.put("intersection_point", intersectionPoint);
-                    candidateData.put("dist_cm_display", distToBottomCm);
+                    // [修改] 使用 CandidateInfo 对象替代 HashMap
+                    CandidateInfo candidateData = new CandidateInfo();
+                    candidateData.cubeIndex = i;
+                    candidateData.primaryScore = distToBottomCm;
+                    candidateData.secondaryScore = secondaryScore;
+                    candidateData.lineAngleDeg = lineAngleDegFromVertical;
+                    candidateData.drawCenter = drawCenterOnDisplayInt;
+                    candidateData.intersectionPoint = intersectionPoint;
+                    candidateData.distanceCm = distToBottomCm;
+
                     candidateCubesWithScores.add(candidateData);
                 }
             }
 
             int bestCubeOriginalIndex = -1;
             if (!candidateCubesWithScores.isEmpty()) {
+                // [修改] 更新排序比较器以使用 CandidateInfo 字段
                 Collections.sort(candidateCubesWithScores, (a, b) -> {
-                    double primaryA = (Double) a.get("primary_score");
-                    double primaryB = (Double) b.get("primary_score");
-                    if (primaryA != primaryB) {
-                        return Double.compare(primaryA, primaryB);
+                    if (a.primaryScore != b.primaryScore) {
+                        return Double.compare(a.primaryScore, b.primaryScore);
                     }
-                    double secondaryA = (Double) a.get("secondary_score");
-                    double secondaryB = (Double) b.get("secondary_score");
-                    return Double.compare(secondaryA, secondaryB);
+                    return Double.compare(a.secondaryScore, b.secondaryScore);
                 });
 
-                if ((Double) candidateCubesWithScores.get(0).get("primary_score") != Double.POSITIVE_INFINITY) {
-                    bestCubeOriginalIndex = (Integer) candidateCubesWithScores.get(0).get("cube_index");
+                if (candidateCubesWithScores.get(0).primaryScore != Double.POSITIVE_INFINITY) {
+                    bestCubeOriginalIndex = candidateCubesWithScores.get(0).cubeIndex;
                 }
             }
 
             if (bestCubeOriginalIndex != -1) {
                 DetectedCube bestCube = cubes.get(bestCubeOriginalIndex);
-                Map<String, Object> bestCandidateData = null;
-                for (Map<String, Object> data : candidateCubesWithScores) {
-                    if ((Integer) data.get("cube_index") == bestCubeOriginalIndex) {
+                CandidateInfo bestCandidateData = null;
+                // [修改] 更新查找最佳候选对象的方式
+                for (CandidateInfo data : candidateCubesWithScores) {
+                    if (data.cubeIndex == bestCubeOriginalIndex) {
                         bestCandidateData = data;
                         break;
                     }
@@ -785,8 +801,8 @@ public class WebcamExample extends LinearOpMode {
                 if (bestCandidateData != null) {
                     latestBestCubeColor = bestCube.color;
                     latestBestCubeAngle = bestCube.angleDeg;
-                    latestBestCubeDistance = (Double) bestCandidateData.get("dist_cm_display");
-                    latestBestCubeLineAngle = (Double) bestCandidateData.get("line_angle_deg_display");
+                    latestBestCubeDistance = bestCandidateData.distanceCm;
+                    latestBestCubeLineAngle = bestCandidateData.lineAngleDeg;
                     latestNumberOfCubesDetected = cubes.size();
                 }
             } else {
@@ -794,17 +810,17 @@ public class WebcamExample extends LinearOpMode {
                 latestBestCubeAngle = 0.0;
                 latestBestCubeDistance = Double.POSITIVE_INFINITY;
                 latestBestCubeLineAngle = 0.0;
-                latestNumberOfCubesDetected = cubes.size(); // [修正一个小bug] 即使没有best cube，也应该报告检测到的总数
+                latestNumberOfCubesDetected = cubes.size();
             }
 
-
-            // [修改] 仅当调试视图开启时，才执行下面的所有绘图操作
+            // 仅当调试视图开启时，才执行下面的所有绘图操作
             if (!WebcamExample.ENABLE_DEBUG_VIEW) {
                 return; // 如果关闭调试，则直接返回，不绘制任何东西
             }
 
-            for (Map<String, Object> candidateData : candidateCubesWithScores) {
-                int currentCubeOriginalIndex = (Integer) candidateData.get("cube_index");
+            // [修改] 遍历 CandidateInfo 列表并使用其字段进行绘制
+            for (CandidateInfo candidateData : candidateCubesWithScores) {
+                int currentCubeOriginalIndex = candidateData.cubeIndex;
                 DetectedCube cubeToDraw = cubes.get(currentCubeOriginalIndex);
 
                 Scalar boxColorToUse;
@@ -814,10 +830,11 @@ public class WebcamExample extends LinearOpMode {
                     boxColorToUse = BOX_COLOR_DEFAULT;
                 }
 
-                Point drawCenterOnDisplayInt = (Point) candidateData.get("draw_center");
-                Point intersectionPointToDraw = (Point) candidateData.get("intersection_point");
-                double lineAngleToDisplay = (Double) candidateData.get("line_angle_deg_display");
-                double distCmToDisplay = (Double) candidateData.get("dist_cm_display");
+                // 从 CandidateInfo 对象中获取数据
+                Point drawCenterOnDisplayInt = candidateData.drawCenter;
+                Point intersectionPointToDraw = candidateData.intersectionPoint;
+                double lineAngleToDisplay = candidateData.lineAngleDeg;
+                double distCmToDisplay = candidateData.distanceCm;
 
                 tempScaledBoxPointsForDisplay.fromList(Arrays.asList(scaleRectPoints(cubeToDraw.boundingBoxPoints, drawScaleToDisplay)));
                 Imgproc.drawContours(displayOutput, Arrays.asList(tempScaledBoxPointsForDisplay), 0, boxColorToUse, 2);
@@ -850,7 +867,7 @@ public class WebcamExample extends LinearOpMode {
                         boxColorToUse, 1);
                 Imgproc.putText(displayOutput, String.format(Locale.US, "ObjA:%.1f", cubeToDraw.angleDeg), new Point(min_x_on_display, textYObjA),
                         Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
-                Imgproc.putText(displayOutput, String.format(Locale.US, "S2:%.1f", (Double) candidateData.get("secondary_score")), new Point(min_x_on_display, textYScore),
+                Imgproc.putText(displayOutput, String.format(Locale.US, "S2:%.1f", candidateData.secondaryScore), new Point(min_x_on_display, textYScore),
                         Imgproc.FONT_HERSHEY_SIMPLEX, 0.4, boxColorToUse, 1);
                 if (distCmToDisplay != Double.POSITIVE_INFINITY) {
                     Imgproc.putText(displayOutput, String.format(Locale.US, "Dist:%.1fcm", distCmToDisplay), new Point(min_x_on_display, textYDist),
