@@ -1,3 +1,9 @@
+/**
+ * 用于解算连杆，期望伸长距离返回曲柄角度和相应舵机位置
+ * @author BlueDarkUP
+ * @version 2025/6
+ *
+ */
 package org.firstinspires.ftc.teamcode.API;
 
 import java.lang.Math;

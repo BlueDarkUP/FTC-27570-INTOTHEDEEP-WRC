@@ -1,7 +1,7 @@
 /**
  * 我会努力让视觉程序变的优雅的
  * @author BlueDarkUP
- * @version 2025/6/4
+ * @version 2025/6
  *
  */
 package org.firstinspires.ftc.teamcode.vision;
@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
+import org.firstinspires.ftc.teamcode.API.PositionCalculator;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -145,7 +146,6 @@ public class WebcamExample extends LinearOpMode {
             if (sliderTarget != null) {
                 telemetry.addData("滑轨舵机 (距离) 位置", String.format(Locale.US, "%.4f", sliderTarget.servoPosition));
                 telemetry.addData("滑轨舵机 (距离) 角度", String.format(Locale.US, "%.1f deg", sliderTarget.rotationDegrees));
-                // sliderServo.setPosition(sliderTarget.servoPosition);
             } else {
                 telemetry.addData("滑轨舵机 (距离)", "N/A (无目标或超范围)");
             }
@@ -162,10 +162,14 @@ public class WebcamExample extends LinearOpMode {
                 // B舵机角度 = α + β (用于姿态校准)
                 double servoBAngle = alpha + beta;
 
+                // 通过API计算舵机目标位置
+                double TURN_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 0.00, 0.00, false, servoAAngle);    // 具体数值等待实际测量
+                double ROTATE_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 0.00, 0.00, false, servoBAngle);  // 具体数值等待实际测量
                 // 显示计算出的 A 和 B 舵机角度
                 telemetry.addData("A舵机 (偏航) 目标角度", String.format(Locale.US, "%.1f deg", servoAAngle));
                 telemetry.addData("B舵机 (校准) 目标角度", String.format(Locale.US, "%.1f deg", servoBAngle));
-
+                telemetry.addData("转台舵机目标位置", String.format(Locale.US, "%.1f deg", TURN_SERVO_POS));
+                telemetry.addData("旋转舵机目标位置", String.format(Locale.US, "%.1f deg", ROTATE_SERVO_POS));
 
 
             } else {
