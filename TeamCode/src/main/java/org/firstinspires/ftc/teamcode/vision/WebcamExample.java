@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics; // 导入 ServoKinematics API
+import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget; // <-- 【修改1】: 导入新的 ServoTarget 类
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -39,15 +40,13 @@ import java.util.Map;
 @TeleOp(name="WebcamExample", group="Vision")
 public class WebcamExample extends LinearOpMode {
 
-
+    // ... (所有常量保持不变) ...
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
     public static final int CAMERA_HEIGHT = 720;
 
     public static final double REAL_WORLD_VIEW_WIDTH_CM = 92.0;
     public static double PIXELS_PER_CM;
-
-
 
     public static final double TARGET_RECT_WIDTH_CM = 31.5;
     public static final double TARGET_RECT_HEIGHT_CM = 24.0;
@@ -72,9 +71,7 @@ public class WebcamExample extends LinearOpMode {
     static {
         COLOR_HSV_RANGES.put("YELLOW", new Scalar[][]{
                 // 默认范围
-                {new Scalar(15, 80, 170), new Scalar(45, 255, 255)},
-                // 针对更暗的黄色（示例，需要实际测试）
-                {new Scalar(10, 50, 100), new Scalar(40, 200, 200)}
+                {new Scalar(15, 80, 100), new Scalar(45, 255, 255)},
                 // 可以添加更多范围
         });
     }
@@ -88,6 +85,7 @@ public class WebcamExample extends LinearOpMode {
     public static final Scalar ANGLE_TEXT_COLOR = new Scalar(200, 200, 0);
     public static final Scalar DISTANCE_TEXT_COLOR = new Scalar(200, 100, 200);
     public static final Scalar GRID_COLOR = new Scalar(70, 70, 70);
+
 
     OpenCvWebcam webcam;
     SamplePipeline pipeline;
@@ -131,21 +129,36 @@ public class WebcamExample extends LinearOpMode {
         while (opModeIsActive()) {
             telemetry.addData("Frame Count", webcam.getFrameCount());
             telemetry.addData("FPS", String.format(Locale.US, "%.2f", webcam.getFps()));
-            telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
             telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
-            telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
-            telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
             telemetry.addLine("--- Vision Results ---");
             telemetry.addData("Cubes Detected", pipeline.latestNumberOfCubesDetected);
             telemetry.addData("Best Cube Color", pipeline.latestBestCubeColor);
-            telemetry.addData("Best Cube Angle (Obj)", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeAngle));
             telemetry.addData("Best Cube Dist (Target)", String.format(Locale.US, "%.1f cm", pipeline.latestBestCubeDistance));
 
-            telemetry.addData("Best Cube Line Angle", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeLineAngle));
+            // =================================================================================
+            // 【修改2】: 更新舵机计算和遥测显示
+            // =================================================================================
+            // 调用新的运动学 API
+            ServoTarget target = ServoKinematics.calculateServoTarget(pipeline.latestBestCubeDistance);
 
-            // 计算舵机角度
-            double calculatedServoAngle = ServoKinematics.getServoRotationDegrees(pipeline.latestBestCubeDistance);
-            telemetry.addData("Calculated Servo Angle", String.format(Locale.US, "%.1f deg", calculatedServoAngle));
+            // 检查返回值是否有效
+            if (target != null) {
+                // 如果有效，显示计算出的舵机位置和角度
+                telemetry.addData("Calculated Servo Position", String.format(Locale.US, "%.4f", target.servoPosition));
+                telemetry.addData("Calculated Servo Angle", String.format(Locale.US, "%.1f deg", target.rotationDegrees));
+
+                // 在真实比赛中，你会在这里设置舵机位置
+                // yourServo.setPosition(target.servoPosition);
+
+            } else {
+                // 如果距离无效 (例如太大、太小或未检测到)，显示 "N/A"
+                telemetry.addData("Calculated Servo Position", "N/A (Out of range or no target)");
+                telemetry.addData("Calculated Servo Angle", "N/A");
+            }
+            // =================================================================================
+            // 【修改结束】
+            // =================================================================================
+
 
             telemetry.update();
 
@@ -163,6 +176,7 @@ public class WebcamExample extends LinearOpMode {
         }
     }
 
+    // ... (SamplePipeline 类和其他内部类保持不变) ...
     static class DetectedCube {
         public String color;
         public int centerXImagePx;
@@ -848,4 +862,5 @@ public class WebcamExample extends LinearOpMode {
             if (targetZoneContourAtProcessedScaleHolder != null) targetZoneContourAtProcessedScaleHolder.release();
         }
     }
+
 }
