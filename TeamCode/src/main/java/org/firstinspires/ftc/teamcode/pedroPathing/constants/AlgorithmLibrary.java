@@ -116,7 +116,22 @@ public class AlgorithmLibrary {
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
         intake_rotate.setPosition(0.62);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
-        camera_arm.setPosition(0.113);
+        camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
+    }
+    public void performVisionGrasp(double sliderServoPosition, double turnServoPosition, double rotateServoPosition) throws InterruptedException {
+        forward_slide.setPosition(sliderServoPosition);
+        intake_spinner.setPosition(turnServoPosition);
+        intake_rotate.setPosition(rotateServoPosition);
+        Thread.sleep(100);
+        arm_forward.setPosition(0.27);
+        Thread.sleep(500);
+        forward_claw.setPosition(0.5);
+        Thread.sleep(200);
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+        forward_slide.setPosition(ConstantMap.Slide_In_Position);
+        intake_rotate.setPosition(0.62); // Or a constant
+        intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(0.113); // Or a constant
     }
 
 
