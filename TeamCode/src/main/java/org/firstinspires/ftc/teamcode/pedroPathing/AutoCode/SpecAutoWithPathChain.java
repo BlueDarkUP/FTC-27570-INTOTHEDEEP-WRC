@@ -40,22 +40,22 @@ public class SpecAutoWithPathChain extends OpMode{
     private final Pose FscorePose = new Pose(39, 70, Math.toRadians(0));
 
     private final Pose Push1Pose = new Pose(20, 23, Math.toRadians(0));
-    private final Pose Push1Control1Pose = new Pose(1.6,22.6,Math.toRadians(0));
-    private final Pose Push1Control2Pose = new Pose(43.4,32.2,Math.toRadians(0));
-    private final Pose Push1Control3Pose = new Pose(78.6,53.3,Math.toRadians(0));
-    private final Pose Push1Control4Pose = new Pose(66.5,13.7,Math.toRadians(0));
-    private final Pose Push1Control5Pose = new Pose(55.5,24.7,Math.toRadians(0));
+    private final Pose Push1Control1Pose = new Pose(1.6,22.6);
+    private final Pose Push1Control2Pose = new Pose(43.4,32.2);
+    private final Pose Push1Control3Pose = new Pose(78.6,53.3);
+    private final Pose Push1Control4Pose = new Pose(66.5,13.7);
+    private final Pose Push1Control5Pose = new Pose(55.5,24.7);
     private final Pose Push2Pose = new Pose(20,14,Math.toRadians(0));
 
-    private final Pose Push2Control1Pose = new Pose(97.2,24.2,Math.toRadians(0));
-    private final Pose Push2Control2Pose = new Pose(24.7,17.2,Math.toRadians(0));
-    private final Pose Push2Control3Pose = new Pose(94.9,13,Math.toRadians(0));
+    private final Pose Push2Control1Pose = new Pose(97.2,24.2);
+    private final Pose Push2Control2Pose = new Pose(24.7,17.2);
+    private final Pose Push2Control3Pose = new Pose(94.9,13);
     private final Pose Push3Pose = new Pose(20,8.5,Math.toRadians(0));
 
-    private final Pose Push3Control1Pose = new Pose(98.1,13.7,Math.toRadians(0));
-    private final Pose Push3Control2Pose = new Pose(21.7,10.7,Math.toRadians(0));
-    private final Pose Push3Control3Pose = new Pose(97.4,7.6,Math.toRadians(0));
-    private final Pose GetspecControlPosition = new Pose(20,31,Math.toRadians(0));
+    private final Pose Push3Control1Pose = new Pose(98.1,13.7);
+    private final Pose Push3Control2Pose = new Pose(21.7,10.7);
+    private final Pose Push3Control3Pose = new Pose(97.4,7.6);
+    private final Pose GetspecControlPosition = new Pose(20,31);
     private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
     private final Pose scorePose = new Pose(39,70,Math.toRadians(0));
     private final Pose scorePoseControlPose = new Pose(25,31,Math.toRadians(0));

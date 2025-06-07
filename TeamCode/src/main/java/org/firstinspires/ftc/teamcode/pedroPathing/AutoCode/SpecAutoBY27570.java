@@ -37,13 +37,13 @@ public class SpecAutoBY27570 extends OpMode{
     private final Pose GP1= new Pose(50,35,Math.toRadians(0));
     private final Pose RP1 = new Pose(50,23,Math.toRadians(0));
     //Control point between GP1 and RP1
-    private final Pose RP1C1 = new Pose(64.7,37,Math.toRadians(9));
-    private final Pose RP1C2 = new Pose(61.8,22.5,Math.toRadians(0));
+    private final Pose RP1C1 = new Pose(64.7,37);
+    private final Pose RP1C2 = new Pose(61.8,22.5);
     private final Pose Push1 = new Pose(20,23,Math.toRadians(0));
     private final Pose RP2 = new Pose(50,14,Math.toRadians(0));
     //Control point between RP1 and RP2
-    private final Pose RP2C1 = new Pose(64.7,22.9,Math.toRadians(0));
-    private final Pose RP2C2 = new Pose(60.4,13.1,Math.toRadians(0));
+    private final Pose RP2C1 = new Pose(64.7,22.9);
+    private final Pose RP2C2 = new Pose(60.4,13.1);
     private final Pose Push2 = new Pose(20,14,Math.toRadians(0));
 
 
