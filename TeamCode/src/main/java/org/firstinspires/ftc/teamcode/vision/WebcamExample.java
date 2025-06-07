@@ -14,6 +14,9 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
 import org.firstinspires.ftc.teamcode.API.PositionCalculator;
+// 新增的引用
+import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
+import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -42,7 +45,38 @@ import java.util.Map;
 public class WebcamExample extends LinearOpMode {
 
     // 调试视图总开关。调试时设为 true，比赛时设为 false 以提升性能。
-    public static final boolean ENABLE_DEBUG_VIEW = false;
+    public static final boolean ENABLE_DEBUG_VIEW = true;
+
+    // =================================================================================================
+    // =========== 新增的可调参数 (Tunable Parameters) ==================================================
+    // =================================================================================================
+
+    /**
+     * [问题1修正] 距离非线性修正指数。
+     * 1.0 = 无修正。
+     * > 1.0 = 放大远距离的修正效果（让滑轨对远处物体移动更多）。
+     * < 1.0 = 缩小远距离的修正效果。
+     * 根据现象“越远滑轨动得越不够”，建议从 1.1 开始尝试。
+     */
+    public static final double DISTANCE_CORRECTION_EXPONENT = 1.1;
+
+    /**
+     * [问题1修正] 距离修正的参考距离 (单位: cm)。
+     * 这是进行指数修正的基准点。建议设为您机器人最常见的抓取距离。
+     */
+    public static final double DISTANCE_CORRECTION_REFERENCE_CM = 24.0;
+
+    /**
+     * [问题2修正] 左侧目标瞄准修正角度 (单位: 度)。
+     * 0.0 = 无修正。
+     * 当目标在视野左侧时，A舵机角度会加上此值。
+     * 根据现象“servoAAngle需要小一点”，请使用一个负数，如 -3.0 或 -5.0。
+     */
+    public static final double LEFT_SIDE_AIM_CORRECTION_DEGREES = -15.0;
+
+    // =================================================================================================
+    // =================================================================================================
+    // =================================================================================================
 
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
@@ -74,7 +108,7 @@ public class WebcamExample extends LinearOpMode {
     static {
         COLOR_HSV_RANGES.put("YELLOW", new Scalar[][]{
                 // 默认范围
-                {new Scalar(15, 80, 100), new Scalar(45, 255, 255)},
+                {new Scalar(15, 80, 180), new Scalar(45, 255, 255)},
                 // 可以添加更多范围
         });
     }
@@ -89,12 +123,22 @@ public class WebcamExample extends LinearOpMode {
     public static final Scalar DISTANCE_TEXT_COLOR = new Scalar(200, 100, 200);
     public static final Scalar GRID_COLOR = new Scalar(70, 70, 70);
 
-
     OpenCvWebcam webcam;
     SamplePipeline pipeline;
+    // 新增的 AlgorithmLibrary 实例
+    AlgorithmLibrary Algorithm;
 
     @Override
     public void runOpMode() {
+        // --- 新增的结构控制初始化代码 ---
+        Algorithm = new AlgorithmLibrary(hardwareMap);
+        try {
+            Algorithm.Initialize_All_For_Vision();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        // ------------------------------------
+
         if (REAL_WORLD_VIEW_WIDTH_CM > 0 && CAMERA_WIDTH > 0) {
             PIXELS_PER_CM = CAMERA_WIDTH / REAL_WORLD_VIEW_WIDTH_CM;
             telemetry.addData("Vision", String.format(Locale.US, "PIXELS_PER_CM: %.2f", PIXELS_PER_CM));
@@ -136,23 +180,37 @@ public class WebcamExample extends LinearOpMode {
             telemetry.addLine("--- Vision Results ---");
             telemetry.addData("Cubes Detected", pipeline.latestNumberOfCubesDetected);
             telemetry.addData("Best Cube Color", pipeline.latestBestCubeColor);
-            telemetry.addData("Best Cube Dist (Target)", String.format(Locale.US, "%.1f cm", pipeline.latestBestCubeDistance));
+            telemetry.addData("Best Cube Dist (Raw)", String.format(Locale.US, "%.1f cm", pipeline.latestBestCubeDistance)); // 显示原始距离
             telemetry.addData("α (物体姿态角)", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeAngle));
             telemetry.addData("β (目标连线角)", String.format(Locale.US, "%.1f deg", pipeline.latestBestCubeLineAngle));
 
             telemetry.addLine("--- 机械臂与舵机计算 ---");
+
+            // --- [修改点 1] ---
             // 1. 滑轨舵机 (基于距离)
-            // 调用运动学 API 计算滑轨舵机的位置
-            ServoTarget sliderTarget = ServoKinematics.calculateServoTarget(pipeline.latestBestCubeDistance);
+            double rawDistance = pipeline.latestBestCubeDistance;
+            double correctedDistance = rawDistance; // 默认情况下，修正距离等于原始距离
+
+            // 仅在检测到有效距离时应用非线性修正
+            if (rawDistance < Double.POSITIVE_INFINITY && rawDistance > 0) {
+                // 应用指数修正公式: Corrected = Ref * (Raw / Ref) ^ Exponent
+                correctedDistance = DISTANCE_CORRECTION_REFERENCE_CM * Math.pow(rawDistance / DISTANCE_CORRECTION_REFERENCE_CM, DISTANCE_CORRECTION_EXPONENT);
+                telemetry.addData("滑轨舵机 (距离) 修正后", String.format(Locale.US, "%.1f cm", correctedDistance));
+            } else {
+                telemetry.addData("滑轨舵机 (距离) 修正后", "N/A");
+            }
+            // 使用修正后的距离来调用运动学API
+            ServoTarget sliderTarget = ServoKinematics.calculateServoTarget(correctedDistance);
 
             // 检查返回值是否有效并显示
             if (sliderTarget != null) {
-                telemetry.addData("滑轨舵机 (距离) 位置", String.format(Locale.US, "%.4f", sliderTarget.servoPosition));
-                telemetry.addData("滑轨舵机 (距离) 角度", String.format(Locale.US, "%.1f deg", sliderTarget.rotationDegrees));
+                telemetry.addData("滑轨舵机 (位置)", String.format(Locale.US, "%.4f", sliderTarget.servoPosition));
+                telemetry.addData("滑轨舵机 (角度)", String.format(Locale.US, "%.1f deg", sliderTarget.rotationDegrees));
             } else {
-                telemetry.addData("滑轨舵机 (距离)", "N/A (无目标或超范围)");
+                telemetry.addData("滑轨舵机", "N/A (无目标或超范围)");
             }
 
+            // --- [修改点 2] ---
             // 2. A/B舵机 (基于角度)
             // 检查是否检测到有效目标
             if (!pipeline.latestBestCubeColor.equals("None")) {
@@ -162,17 +220,40 @@ public class WebcamExample extends LinearOpMode {
                 // A舵机角度 = -β (用于左右对准)
                 double servoAAngle = -beta + 90;
 
+                // **新增**: 如果目标在左侧 (beta < 0)，则应用修正
+                if (beta > 0) {
+                    servoAAngle += LEFT_SIDE_AIM_CORRECTION_DEGREES;
+                    telemetry.addData("左侧瞄准修正", String.format(Locale.US, "%.1f deg", LEFT_SIDE_AIM_CORRECTION_DEGREES));
+                }
+
                 // B舵机角度 = α + β (用于姿态校准)
                 double servoBAngle = alpha + beta;
 
                 // 通过API计算舵机目标位置
-                double TURN_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 1.00, 170, true, servoAAngle);
+                double TURN_SERVO_POS = PositionCalculator.calculatePositionValue(0.53, 1, 90, true, servoAAngle);
                 double ROTATE_SERVO_POS = PositionCalculator.calculatePositionValue(0.07, 0.62, 90, false, servoBAngle);
+                if (gamepad1.right_bumper) {
+                    if (sliderTarget != null) { // 确保sliderTarget有效再使用
+                        AlgorithmLibrary.forward_slide.setPosition(sliderTarget.servoPosition);
+                    }
+                    AlgorithmLibrary.intake_spinner.setPosition(TURN_SERVO_POS);
+                    AlgorithmLibrary.intake_rotate.setPosition(ROTATE_SERVO_POS);
+                    sleep(100);
+                    AlgorithmLibrary.arm_forward.setPosition(0.27);
+                    sleep(500);
+                    AlgorithmLibrary.forward_claw.setPosition(0.5);
+                    sleep(200);
+                    AlgorithmLibrary.arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+                    AlgorithmLibrary.forward_slide.setPosition(ConstantMap.Slide_In_Position);
+                    AlgorithmLibrary.intake_rotate.setPosition(0.62);
+                    AlgorithmLibrary.intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+                    AlgorithmLibrary. camera_arm.setPosition(0.113);
+                }
                 // 显示计算出的 A 和 B 舵机角度
                 telemetry.addData("A舵机 (偏航) 目标角度", String.format(Locale.US, "%.1f deg", servoAAngle));
                 telemetry.addData("B舵机 (校准) 目标角度", String.format(Locale.US, "%.1f deg", servoBAngle));
-                telemetry.addData("转台舵机目标位置", String.format(Locale.US, "%.1f deg", TURN_SERVO_POS));
-                telemetry.addData("旋转舵机目标位置", String.format(Locale.US, "%.1f deg", ROTATE_SERVO_POS));
+                telemetry.addData("转台舵机目标位置", String.format(Locale.US, "%.4f deg", TURN_SERVO_POS));
+                telemetry.addData("旋转舵机目标位置", String.format(Locale.US, "%.4f deg", ROTATE_SERVO_POS));
 
 
             } else {
@@ -180,11 +261,13 @@ public class WebcamExample extends LinearOpMode {
                 telemetry.addData("A舵机 (偏航) 目标角度", "N/A (无目标)");
                 telemetry.addData("B舵机 (校准) 目标角度", "N/A (无目标)");
             }
-
+            if (gamepad1.left_bumper) {
+                AlgorithmLibrary.camera_arm.setPosition(0.113);
+            }
 
             telemetry.update();
 
-            if (gamepad1.a) {
+            if (gamepad1.cross) {
                 webcam.stopStreaming();
                 telemetry.addLine("Streaming stopped.");
                 telemetry.update();
@@ -403,107 +486,97 @@ public class WebcamExample extends LinearOpMode {
 
                 Core.bitwise_or(masterMask, colorMask, masterMask);
 
+                // --- 图像预处理 ---
                 Imgproc.medianBlur(colorMask, medianBlurred, 3);
-
+                // 开运算，用于移除小的噪点
                 Imgproc.morphologyEx(medianBlurred, opened, Imgproc.MORPH_OPEN, kernel3x3, new Point(-1, -1), 2);
 
+                // --- 分水岭算法（已禁用）---
+                // 不再需要此部分来分割粘连物体
+                /*
                 Imgproc.dilate(opened, sureBg, kernel3x3, new Point(-1, -1), 2);
-
                 Imgproc.distanceTransform(opened, distTransform, Imgproc.DIST_L2, 5);
                 Core.MinMaxLocResult mmr = Core.minMaxLoc(distTransform);
-
-
                 double distThreshold = 0.57 * mmr.maxVal;
-
-
                 Imgproc.threshold(distTransform, sureFg, distThreshold, 255, Imgproc.THRESH_BINARY);
                 sureFg.convertTo(sureFg, CvType.CV_8U);
-
                 Core.subtract(sureBg, sureFg, unknown);
-
                 Imgproc.connectedComponents(sureFg, markers);
-
                 markers.setTo(new Scalar(0), unknown);
-
                 Imgproc.GaussianBlur(processedFrameForDetection, imgForWatershed, new Size(5, 5), 0);
-
                 Imgproc.watershed(imgForWatershed, markers);
+                */
 
-                Core.MinMaxLocResult markerMax = Core.minMaxLoc(markers);
-                int maxMarkerId = (int) markerMax.maxVal;
 
+                // --- 新：直接从清理后的二值图像中查找轮廓 ---
                 List<MatOfPoint> contours = new ArrayList<>();
                 Mat hierarchy = new Mat();
 
-                for (int markerId = 1; markerId <= maxMarkerId; markerId++) {
-                    colorMask.setTo(new Scalar(0));
-                    Core.compare(markers, new Scalar(markerId), colorMask, Core.CMP_EQ);
-
-                    contours.clear();
-                    Imgproc.findContours(colorMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                    for (MatOfPoint contour : contours) {
-                        double area = Imgproc.contourArea(contour);
-                        if (!(scaledMinAreaPixels <= area && area <= scaledMaxAreaPixels)) {
-                            contour.release();
-                            continue;
-                        }
-
-                        if (contour.rows() < 5) {
-                            contour.release();
-                            continue;
-                        }
-
-                        contour.convertTo(tempContour2f, CvType.CV_32F);
-                        RotatedRect minAreaRect = Imgproc.minAreaRect(tempContour2f);
-                        Point rectCenter = minAreaRect.center;
-                        Size rectSize = minAreaRect.size;
-                        double cvAngle = minAreaRect.angle;
-
-                        double rectWidthRot = rectSize.width;
-                        double rectHeightRot = rectSize.height;
-
-                        double objectOrientationAngleDeg;
-                        if (rectWidthRot < rectHeightRot) {
-                            objectOrientationAngleDeg = cvAngle + 90.0;
-                        } else {
-                            objectOrientationAngleDeg = cvAngle;
-                        }
-
-                        double side1 = rectWidthRot;
-                        double side2 = rectHeightRot;
-                        if (side1 < 1e-3 || side2 < 1e-3) {
-                            contour.release();
-                            continue;
-                        }
-                        double longSide = Math.max(side1, side2);
-                        double shortSide = Math.min(side1, side2);
-                        double detectedAspectRatio = longSide / shortSide;
-
-                        double lowerBoundAR = TARGET_OBJECT_ASPECT_RATIO * (1.0 - ASPECT_RATIO_TOLERANCE_PERCENT);
-                        double upperBoundAR = TARGET_OBJECT_ASPECT_RATIO * (1.0 + ASPECT_RATIO_TOLERANCE_PERCENT);
-
-                        if (!(lowerBoundAR <= detectedAspectRatio && detectedAspectRatio <= upperBoundAR)) {
-                            contour.release();
-                            continue;
-                        }
-
-                        Point[] boxPoints = new Point[4];
-                        minAreaRect.points(boxPoints);
-
-                        allDetectedCubes.add(new DetectedCube(
-                                colorName,
-                                (int) Math.round(rectCenter.x),
-                                (int) Math.round(rectCenter.y),
-                                boxPoints,
-                                processingScale,
-                                objectOrientationAngleDeg
-                        ));
-                        contour.release();
-                    }
-                }
+                // 直接在'opened'图像上寻找轮廓
+                Imgproc.findContours(opened, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
                 hierarchy.release();
-            }
+
+                // 遍历找到的所有轮廓
+                for (MatOfPoint contour : contours) {
+                    double area = Imgproc.contourArea(contour);
+                    if (!(scaledMinAreaPixels <= area && area <= scaledMaxAreaPixels)) {
+                        contour.release();
+                        continue;
+                    }
+
+                    if (contour.rows() < 5) {
+                        contour.release();
+                        continue;
+                    }
+
+                    contour.convertTo(tempContour2f, CvType.CV_32F);
+                    RotatedRect minAreaRect = Imgproc.minAreaRect(tempContour2f);
+                    Point rectCenter = minAreaRect.center;
+                    Size rectSize = minAreaRect.size;
+                    double cvAngle = minAreaRect.angle;
+
+                    double rectWidthRot = rectSize.width;
+                    double rectHeightRot = rectSize.height;
+
+                    double objectOrientationAngleDeg;
+                    if (rectWidthRot < rectHeightRot) {
+                        objectOrientationAngleDeg = cvAngle + 90.0;
+                    } else {
+                        objectOrientationAngleDeg = cvAngle;
+                    }
+
+                    double side1 = rectWidthRot;
+                    double side2 = rectHeightRot;
+                    if (side1 < 1e-3 || side2 < 1e-3) {
+                        contour.release();
+                        continue;
+                    }
+                    double longSide = Math.max(side1, side2);
+                    double shortSide = Math.min(side1, side2);
+                    double detectedAspectRatio = longSide / shortSide;
+
+                    double lowerBoundAR = TARGET_OBJECT_ASPECT_RATIO * (1.0 - ASPECT_RATIO_TOLERANCE_PERCENT);
+                    double upperBoundAR = TARGET_OBJECT_ASPECT_RATIO * (1.0 + ASPECT_RATIO_TOLERANCE_PERCENT);
+
+                    if (!(lowerBoundAR <= detectedAspectRatio && detectedAspectRatio <= upperBoundAR)) {
+                        contour.release();
+                        continue;
+                    }
+
+                    Point[] boxPoints = new Point[4];
+                    minAreaRect.points(boxPoints);
+
+                    allDetectedCubes.add(new DetectedCube(
+                            colorName,
+                            (int) Math.round(rectCenter.x),
+                            (int) Math.round(rectCenter.y),
+                            boxPoints,
+                            processingScale,
+                            objectOrientationAngleDeg
+                    ));
+                    contour.release();
+                } // 轮廓遍历循环结束
+            } // 颜色遍历循环结束
 
             // 增加 processingScale 参数传递
             drawDetections(bgr, allDetectedCubes, drawScale, processingScale,

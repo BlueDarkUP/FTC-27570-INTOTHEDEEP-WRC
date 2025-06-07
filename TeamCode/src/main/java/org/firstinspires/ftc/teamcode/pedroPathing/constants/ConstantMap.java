@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.constants;
 
+import org.firstinspires.ftc.teamcode.API.PositionCalculator;
 /**
  * 用常量爽飞了
  * @author LucaLi
@@ -39,11 +40,11 @@ public class ConstantMap {
     public static final double ForwardClaw_Lax_Position = 0.37;
     public static final double ForwardClaw_Initialize_Position = 0;
     //Intake rotation
-    public static final double Intake_rotate_Initial_Position = 0;
-    public static final double Intake_rotate_Turned_Position = 0.35;
-    public static final double Intake_spinner_Initial_Position = 0.5;
+    public static final double Intake_rotate_Initial_Position = 0.07;
+    public static final double Intake_rotate_Turned_Position = 0.62;
+    public static final double Intake_spinner_Initial_Position = 0.53;//PositionCalculator.calculatePositionValue(0.53, 1.00, 90, true, 90);
     public static final double Intake_spinner_PutDown_Position = 0;
 
-    public static final double Camera_Arm_Initialize_Position = 0;
-    public static final double Camera_Arm_PutDown_Position = 0.763;
+    public static final double Camera_Arm_Initialize_Position = 0.763;
+    public static final double Camera_Arm_PutDown_Position = 0.113;
 }

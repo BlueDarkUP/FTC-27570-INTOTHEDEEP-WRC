@@ -109,6 +109,17 @@ public class AlgorithmLibrary {
         intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
     }
+
+    public void Initialize_All_For_Vision() throws InterruptedException {
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+        forward_slide.setPosition(ConstantMap.Slide_In_Position);
+        forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
+        intake_rotate.setPosition(0.62);
+        intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(0.113);
+    }
+
+
     public void ArmController(String flag){
         if(Objects.equals(flag,"Up")){
             LiftAction(ConstantMap.Lift_Up_HighChamber_Position);

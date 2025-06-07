@@ -11,10 +11,10 @@ import java.lang.Math;
 public class ServoKinematics {
 
     // --- 几何常量 (单位: 厘米) ---
-    private static final double R_CRANK_LENGTH_CM = 12.85; // 曲柄AB长度
+    private static final double R_CRANK_LENGTH_CM = 11.3; // 曲柄AB长度
     private static final double L_CONNECTING_ROD_LENGTH_CM = 12.0; // 连杆BC长度
-    private static final double H_EFFECTIVE_VERTICAL_OFFSET_CM = 8.5; // C点相对A点的垂直偏移
-    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -11.2; // 完全收回时C点的X坐标
+    private static final double H_EFFECTIVE_VERTICAL_OFFSET_CM = 8.7; // C点相对A点的垂直偏移
+    private static final double X_C_RETRACTED_RELATIVE_TO_A_CM = -17; // 完全收回时C点的X坐标
 
     private static final double MAX_EXTENSION_CM = 24.0;  //滑轨从完全收回到完全伸出的最大物理行程 (cm)
 
