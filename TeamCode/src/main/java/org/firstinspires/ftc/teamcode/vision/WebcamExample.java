@@ -42,7 +42,7 @@ import java.util.Map;
 public class WebcamExample extends LinearOpMode {
 
     // 调试视图总开关。调试时设为 true，比赛时设为 false 以提升性能。
-    public static final boolean ENABLE_DEBUG_VIEW = true;
+    public static final boolean ENABLE_DEBUG_VIEW = false;
 
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
@@ -108,7 +108,7 @@ public class WebcamExample extends LinearOpMode {
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, WEBCAM_NAME_STR), cameraMonitorViewId);
         pipeline = new SamplePipeline();
         webcam.setPipeline(pipeline);
-        webcam.setMillisecondsPermissionTimeout(100000);
+        webcam.setMillisecondsPermissionTimeout(2000);
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
@@ -160,14 +160,14 @@ public class WebcamExample extends LinearOpMode {
                 double beta = pipeline.latestBestCubeLineAngle;   // 目标连线与垂直线的夹角 (β)
 
                 // A舵机角度 = -β (用于左右对准)
-                double servoAAngle = -beta;
+                double servoAAngle = -beta + 90;
 
                 // B舵机角度 = α + β (用于姿态校准)
                 double servoBAngle = alpha + beta;
 
                 // 通过API计算舵机目标位置
-                double TURN_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 0.00, 0.00, false, servoAAngle);    // 具体数值等待实际测量
-                double ROTATE_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 0.00, 0.00, false, servoBAngle);  // 具体数值等待实际测量
+                double TURN_SERVO_POS = PositionCalculator.calculatePositionValue(0.00, 1.00, 170, true, servoAAngle);
+                double ROTATE_SERVO_POS = PositionCalculator.calculatePositionValue(0.07, 0.62, 90, false, servoBAngle);
                 // 显示计算出的 A 和 B 舵机角度
                 telemetry.addData("A舵机 (偏航) 目标角度", String.format(Locale.US, "%.1f deg", servoAAngle));
                 telemetry.addData("B舵机 (校准) 目标角度", String.format(Locale.US, "%.1f deg", servoBAngle));
