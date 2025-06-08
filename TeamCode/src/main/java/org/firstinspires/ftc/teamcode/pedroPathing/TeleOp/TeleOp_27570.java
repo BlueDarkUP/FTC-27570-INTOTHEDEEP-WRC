@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.TeleOp;
 
+import static android.os.SystemClock.sleep;
+
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.pedropathing.follower.Follower;
@@ -12,6 +14,11 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
+import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
+
 /**
  * This is the fucking best teleop code in the world.
  * @author Luca Li
@@ -24,12 +31,15 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 public class TeleOp_27570 extends OpMode {
     private Follower follower;
     private AlgorithmLibrary Algorithm;
+    private VisionGraspingAPI visionAPI;
     private boolean BackGrabFlag=false,BackGrabLastFlag=false,IntakeRotateFlag=false,IntakeRotateLastFlag=false;
     private boolean ClawFlag=false,ClawLastFlag=false,IntakeSlideFlag = false,IntakeSlideLastFlag = false;
     private boolean ArmFlag = false,ArmLastFlag = false;
     private boolean EmergencyFlag = false;
+    private boolean VLflag = false;
 
-    boolean Eflag1 = false,Eflag2 = false;
+    private boolean Eflag1 = false,Eflag2 = false;
+
     private ElapsedTime Emergencytimer1 = new ElapsedTime(),Emergencytimer2 = new ElapsedTime();
     private final Pose startPose = new Pose(0,0,0);
 
@@ -39,6 +49,8 @@ public class TeleOp_27570 extends OpMode {
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         Algorithm = new AlgorithmLibrary(hardwareMap);
+        visionAPI = new VisionGraspingAPI();
+        visionAPI.init(hardwareMap);
         try {
             Algorithm.Initialize_All_For_TeleOp();
         } catch (InterruptedException e) {
@@ -70,20 +82,21 @@ public class TeleOp_27570 extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, +gamepad1.left_trigger-gamepad1.right_trigger, true);
+        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
         follower.update();
 
         BackGrabController();
-        try {
-            ForwardClawController();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         RotateController();
         SlideController();
         EmergencyInitMotors();
         ArmUpController();
         ClimbController();
+        try {
+            VisionController();
+            ForwardClawController();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         /* Telemetry Outputs of our Follower */
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());
@@ -97,6 +110,22 @@ public class TeleOp_27570 extends OpMode {
     /** We do not use this because everything automatically should disable **/
     @Override
     public void stop() {
+    }
+    private void VisionController() throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
+            if(gamepad1.right_stick_button&&graspTarget.isInRange&&!VLflag){
+                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                Algorithm.ForwardGrabController("Open");
+                BackGrabFlag = false;
+                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.SlideController("Back");
+                IntakeSlideFlag = false;
+            }
+            VLflag = gamepad1.right_stick_button;
+        }
     }
     private void BackGrabController(){
         if(gamepad1.square&&!BackGrabLastFlag){
@@ -173,14 +202,14 @@ public class TeleOp_27570 extends OpMode {
         }
         while (EmergencyFlag) {
             if(Algorithm.IsTop(AlgorithmLibrary.Left_Hanging_Motor)&&!Eflag1) {
-                if (Emergencytimer1.milliseconds() > 110) {
+                if (Emergencytimer1.milliseconds() > 50) {
                     Algorithm.InitializeLift();
                     Eflag1 = true;
                 }
             }else{Emergencytimer1.reset();}
 
             if (Algorithm.IsTop(AlgorithmLibrary.BigArm)&&!Eflag2){
-                if(Emergencytimer2.milliseconds() > 110){
+                if(Emergencytimer2.milliseconds() > 50){
                     Algorithm.InitializeArm();
                     Eflag2=true;
                 }

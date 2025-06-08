@@ -1,12 +1,19 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.constants;
 
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
 
 import java.util.Objects;
 
@@ -89,10 +96,10 @@ public class AlgorithmLibrary {
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Right_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Left_Hanging_Motor.setPower(-0.7);
+        /*Left_Hanging_Motor.setPower(-0.7);
         Right_Hanging_Motor.setPower(-0.7);
         BigArm.setPower(-0.4);
-        Thread.sleep(100);
+        Thread.sleep(100);*/
         Left_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Right_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -123,18 +130,28 @@ public class AlgorithmLibrary {
         intake_spinner.setPosition(turnServoPosition);
         intake_rotate.setPosition(rotateServoPosition);
         Thread.sleep(100);
-        arm_forward.setPosition(0.27);
-        Thread.sleep(500);
-        forward_claw.setPosition(0.5);
-        Thread.sleep(200);
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
+        Thread.sleep(450);
+        forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
+        Thread.sleep(160);/*
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         intake_rotate.setPosition(0.62); // Or a constant
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
-        camera_arm.setPosition(0.113); // Or a constant
+        camera_arm.setPosition(0.113); // Or a constant*/
     }
-
-
+    public void VisionIntake(VisionGraspingAPI visionAPI) throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
+            if(graspTarget.isInRange){
+                BackGrabAction(ConstantMap.BackGrab_Initialize);
+                ForwardGrabController("Open");
+                performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                SlideController("Back");
+            }
+        }
+    }
     public void ArmController(String flag){
         if(Objects.equals(flag,"Up")){
             LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
@@ -199,7 +216,7 @@ public class AlgorithmLibrary {
         Right_Hanging_Motor.setPower(-0.7);
     }
     public boolean IsTop(DcMotorEx Motor){
-        if(Motor.getCurrentPosition()<MotorLastPosition+3||Motor.getCurrentPosition()>MotorLastPosition-3){
+        if(Motor.getCurrentPosition()<MotorLastPosition+1||Motor.getCurrentPosition()>MotorLastPosition-1){
             MotorLastPosition = Motor.getCurrentPosition();
             return true;
         }

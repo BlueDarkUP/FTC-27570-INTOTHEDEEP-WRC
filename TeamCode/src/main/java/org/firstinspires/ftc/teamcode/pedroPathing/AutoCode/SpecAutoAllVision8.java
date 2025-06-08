@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
 
 /**
  * This is the fucking best autonomous code in the world.
@@ -28,6 +29,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 public class SpecAutoAllVision8 extends OpMode{
     private Follower follower;
     private AlgorithmLibrary Algorithm;
+    private VisionGraspingAPI visionAPI;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     /** This is the variable where we store the state of our auto.
@@ -86,10 +88,8 @@ public class SpecAutoAllVision8 extends OpMode{
             case 0:
                 follower.followPath(scorePreload,true);
                 follower.update();
-                Algorithm.ArmController("Up");
-                // Thread.sleep(200);
+                //Algorithm.ArmController("Up");
 
-                //Algorithm.BackGrabAction(ConstantMap.BackGrab_LaxPosition);
                 setPathState(2);
                 break;
             /*case 1:
@@ -102,11 +102,11 @@ public class SpecAutoAllVision8 extends OpMode{
             case 2:
                 if(!follower.isBusy()) {
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.VisionIntake(visionAPI);
                     follower.followPath(GetSpec[Specnum-1],true);
                     follower.update();
-                    Algorithm.SlideController("Back");
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController("Down");
+                    //Algorithm.ArmController("Down");
                     setPathState(3);
                     break;
                 }
@@ -116,7 +116,7 @@ public class SpecAutoAllVision8 extends OpMode{
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
                     follower.followPath(Scoring[Specnum-1],true);
                     follower.update();
-                    Algorithm.ArmController("Up");
+                    //Algorithm.ArmController("Up");
                     Specnum++;
                     if(Specnum<8) {
                         setPathState(2);
@@ -173,6 +173,8 @@ public class SpecAutoAllVision8 extends OpMode{
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
+        visionAPI = new VisionGraspingAPI();
+        visionAPI.init(hardwareMap);
         GetSpec = new  PathChain[7];
         Scoring = new PathChain[7];
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
