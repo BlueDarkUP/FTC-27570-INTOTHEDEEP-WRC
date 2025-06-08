@@ -5,6 +5,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 
+/**
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
+ */
 @TeleOp(name="Vision Grasping TeleOp", group="Main")
 public class VisionGraspingTeleOp extends LinearOpMode {
 

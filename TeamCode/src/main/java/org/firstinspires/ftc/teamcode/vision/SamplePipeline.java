@@ -20,6 +20,9 @@ import java.util.Map;
 
 /**
  * OpenCvPipeline 的具体实现，负责处理每一帧图像并识别目标。
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public class SamplePipeline extends OpenCvPipeline {
 

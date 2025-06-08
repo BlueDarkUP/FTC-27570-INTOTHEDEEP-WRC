@@ -6,6 +6,9 @@ import java.util.Map;
 
 /**
  * 存放所有视觉相关配置常量的类
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public final class VisionConstants {
     private VisionConstants() {}

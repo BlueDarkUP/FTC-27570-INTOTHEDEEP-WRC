@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.vision;
 /**
  * 封装单次视觉识别结果的数据
  * 这是一个不可变对象，一旦创建，其值就不能被修改
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public class VisionTargetResult {
 

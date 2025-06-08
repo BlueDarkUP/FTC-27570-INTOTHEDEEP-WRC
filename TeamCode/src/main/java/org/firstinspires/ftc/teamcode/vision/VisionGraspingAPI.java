@@ -14,6 +14,7 @@ import org.openftc.easyopencv.OpenCvWebcam;
  * 封装了所有摄像头和OpenCV图像处理的逻辑，对外提供简单的接口获取识别结果。
  * @author BlueDarkUP
  * @version 2025/6
+ * To My Lover - Zyy
  */
 public class VisionGraspingAPI {
 

@@ -4,7 +4,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.API.PositionCalculator;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
-
+/**
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
+ */
 public class VisionGraspingCalculator {
 
     /**

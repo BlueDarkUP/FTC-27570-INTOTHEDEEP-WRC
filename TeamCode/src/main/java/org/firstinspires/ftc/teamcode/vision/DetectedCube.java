@@ -4,6 +4,9 @@ import org.opencv.core.Point;
 
 /**
  * Pipeline 内部使用的数据类，用于存储一个被检测到的色块（Cube）的信息。
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public class DetectedCube {
     public String color;

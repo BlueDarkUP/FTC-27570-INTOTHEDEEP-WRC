@@ -4,6 +4,9 @@ import org.opencv.core.Point;
 
 /**
  * Pipeline 内部使用的数据类，用于评估和排序可能是最终目标的候选对象。
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public class CandidateInfo {
     int cubeIndex;

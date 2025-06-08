@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.vision;
 
 /**
  * 存储最终计算出的抓取目标舵机位置的数据类。
+ * @author BlueDarkUP
+ * @version 2025/6
+ * To My Lover - Zyy
  */
 public class GraspingTarget {
 
