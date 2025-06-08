@@ -202,6 +202,7 @@ public class SpecAutoAllVision8 extends OpMode{
     /** We do not use this because everything should automatically disable **/
     @Override
     public void stop() {
+        visionAPI.close();
     }
     public void VisionIntake() throws InterruptedException {
         VisionTargetResult result = visionAPI.getLatestResult();
