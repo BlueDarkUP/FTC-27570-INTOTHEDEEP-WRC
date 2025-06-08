@@ -1,12 +1,9 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.TeleOp;
 
-import static android.os.SystemClock.sleep;
-
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,10 +11,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
-import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
-import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
 
 /**
  * This is the fucking best teleop code in the world.

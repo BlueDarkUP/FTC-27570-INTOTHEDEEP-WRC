@@ -1,17 +1,20 @@
-// Filename: VisionGraspingAPI.java
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.Interface;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.vision.Config.VisionConstants;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Process.SamplePipeline;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 /**
- * 视觉抓取API (Vision Grasping API)
- * 封装了所有摄像头和OpenCV图像处理的逻辑，对外提供简单的接口获取识别结果。
+ * 视觉抓取API (Vision Grasping API) - 门面模式 (Facade Pattern) 的实现
+ * 这个类封装了所有摄像头和OpenCV图像处理的复杂初始化和管理逻辑
+ * 对外（主要是OpMode）提供一个极其简洁和易于使用的接口来获取视觉识别结果
  * @author BlueDarkUP
  * @version 2025/6
  * To My Lover - Zyy
@@ -20,6 +23,13 @@ public class VisionGraspingAPI {
 
     private OpenCvWebcam webcam;
     private SamplePipeline pipeline;
+
+    /**
+     * 存储由 Pipeline 计算出的最新结果
+     * 使用 `volatile` 关键字是至关重要的，因为它确保了当 Pipeline 线程更新这个变量时
+     * OpMode 的主线程能够立即看到这个修改，从而避免了多线程数据不同步的问题
+     */
+
     private volatile VisionTargetResult latestResult = new VisionTargetResult();
 
     /**
@@ -86,7 +96,7 @@ public class VisionGraspingAPI {
      * 设为 package-private，仅允许同包下的 Pipeline 类访问。
      * @param newResult 新的识别结果
      */
-    void updateLatestResult(VisionTargetResult newResult) {
+    public void updateLatestResult(VisionTargetResult newResult) {
         this.latestResult = newResult;
     }
 
@@ -95,7 +105,7 @@ public class VisionGraspingAPI {
      * 设为 package-private。
      * @param paused 是否暂停
      */
-    void toggleViewport(boolean paused) {
+    public void toggleViewport(boolean paused) {
         if (webcam != null) {
             if (paused) {
                 webcam.pauseViewport();

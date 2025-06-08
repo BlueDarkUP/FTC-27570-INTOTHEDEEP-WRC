@@ -1,9 +1,13 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.app;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
+import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
 
 /**
  * @author BlueDarkUP
@@ -14,6 +18,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 @TeleOp(name="Vision Grasping TeleOp", group="Main")
 public class VisionGraspingTeleOp extends LinearOpMode {
 
+    // 远超11260的视觉接口
     private VisionGraspingAPI visionAPI;
     private AlgorithmLibrary algorithmLibrary;
 
@@ -21,6 +26,7 @@ public class VisionGraspingTeleOp extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         telemetry.addLine("初始化API，初始化结构");
 
+        // 初始化全世界最强的视觉接口
         visionAPI = new VisionGraspingAPI();
         visionAPI.init(hardwareMap);
         algorithmLibrary = new AlgorithmLibrary(hardwareMap);
@@ -28,7 +34,7 @@ public class VisionGraspingTeleOp extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive() && !isStopRequested()) {
-            VisionTargetResult result = visionAPI.getLatestResult();
+            VisionTargetResult result = visionAPI.getLatestResult(); // 重复获取最新结果
 
             telemetry.addData("Vision FPS", "%.2f", visionAPI.getFps());
             telemetry.addData("Vision Pipeline (ms)", "%.1f", visionAPI.getPipelineTimeMs());
@@ -38,8 +44,8 @@ public class VisionGraspingTeleOp extends LinearOpMode {
 
             if (gamepad1.right_bumper) {
                 // --- 按下 Bumper 时的逻辑 ---
-                if (result.isTargetFound) { // 抓取区有目标
-                    GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
+                if (result.isTargetFound) { // 抓取区是否有目标
+                    GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry); // 计算所需的舵机位置
                     if (graspTarget.isInRange) {
                         telemetry.addLine("正在执行抓取...");
                         telemetry.update();
@@ -84,6 +90,6 @@ public class VisionGraspingTeleOp extends LinearOpMode {
             }
             telemetry.update();
         }
-        visionAPI.close();
+        visionAPI.close(); // 防止REV Control Hub爆炸
     }
 }

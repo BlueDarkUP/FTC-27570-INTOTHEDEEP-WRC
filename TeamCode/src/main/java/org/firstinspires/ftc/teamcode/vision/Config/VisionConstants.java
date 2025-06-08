@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.Config;
 
 import org.opencv.core.Scalar;
 import java.util.HashMap;
@@ -6,6 +6,8 @@ import java.util.Map;
 
 /**
  * 存放所有视觉相关配置常量的类
+ * 将所有可调参数集中在此处，便于管理和调试，避免在代码中出现“魔法数字”
+ * 这是一个final类，并且构造函数是私有的，以防止被继承或实例化
  * @author BlueDarkUP
  * @version 2025/6
  * To My Lover - Zyy

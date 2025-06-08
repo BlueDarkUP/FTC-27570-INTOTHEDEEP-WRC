@@ -1,5 +1,11 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.Process;
 
+import org.firstinspires.ftc.teamcode.vision.Config.VisionConstants;
+import org.firstinspires.ftc.teamcode.vision.Data.CandidateInfo;
+import org.firstinspires.ftc.teamcode.vision.Data.DetectedCube;
+import org.firstinspires.ftc.teamcode.vision.Data.TargetZoneInfo;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -13,12 +19,13 @@ import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * OpenCvPipeline 的具体实现，负责处理每一帧图像并识别目标。
+ * OpenCvPipeline 的具体实现，是整个视觉系统的核心处理单元
+ * 负责处理从摄像头传入的每一帧图像，识别目标，并上报结果
+ * 这个类在一个独立的线程中运行，由 EasyOpenCV 库管理
  * @author BlueDarkUP
  * @version 2025/6
  * To My Lover - Zyy
@@ -34,6 +41,13 @@ public class SamplePipeline extends OpenCvPipeline {
     private Integer targetZoneCenterXAtOriginalScale, targetRectY1AtOriginalScale, targetRectY2AtOriginalScale;
     private boolean viewportPaused;
 
+    /**
+     * 构造函数
+     * 在这里，我们利用一个虚拟的图像帧，提前计算好目标区域在原始分辨率下的轮廓和关键坐标
+     * 这样可以避免在每一帧处理中都重复进行这个复杂的几何计算
+     * @param apiInstance VisionGraspingAPI的实例，用于上报结果
+     */
+
     public SamplePipeline(VisionGraspingAPI apiInstance) {
         this.apiInstance = apiInstance;
         Mat dummyFrame = new Mat(VisionConstants.CAMERA_HEIGHT, VisionConstants.CAMERA_WIDTH, CvType.CV_8UC3);
@@ -44,6 +58,12 @@ public class SamplePipeline extends OpenCvPipeline {
         targetRectY2AtOriginalScale = info.bottomY;
         dummyFrame.release();
     }
+
+    /**
+     * 初始化方法，在第一帧图像传入时被调用一次
+     * 在这里预先分配所有需要在 processFrame 中使用的 Mat 对象
+     * @param firstFrame 摄像头传入的第一帧图像
+     */
 
     @Override
     public void init(Mat firstFrame) {
@@ -63,6 +83,12 @@ public class SamplePipeline extends OpenCvPipeline {
         tempContour2f = new MatOfPoint2f();
         tempScaledBoxPointsForDisplay = new MatOfPoint();
     }
+
+    /**
+     * 核心处理方法，EasyOpenCV会为每一帧图像调用此方法
+     * @param inputRGBA 从摄像头传入的原始图像（RGBA格式）
+     * @return 返回一个处理过的图像（RGBA格式），用于在手机屏幕上显示
+     */
 
     @Override
     public Mat processFrame(Mat inputRGBA) {
@@ -148,6 +174,13 @@ public class SamplePipeline extends OpenCvPipeline {
         Imgproc.cvtColor(bgr, inputRGBA, Imgproc.COLOR_BGR2RGBA);
         return inputRGBA;
     }
+
+    /**
+     * 进行最终决策，并将结果通过API实例上报
+     * 这是整个Pipeline的“大脑”，将检测到的原始数据转化为有意义的决策信息
+     * @param cubes 检测到的所有合格色块列表
+     * (其他参数为处理后的目标区域和相机信息)
+     */
 
     private void drawDetectionsAndSetResult(List<DetectedCube> cubes, double processingScale,
                                             MatOfPoint targetZoneContourProcessed, Integer targetZoneCenterXAtProcessedScale,

@@ -1,19 +1,12 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.constants;
 
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
-import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
 
 import java.util.Objects;
 

@@ -1,8 +1,10 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.Data;
 
 /**
- * 封装单次视觉识别结果的数据
- * 这是一个不可变对象，一旦创建，其值就不能被修改
+ * 封装单次视觉识别结果的数据类
+ * 这是视觉系统对外的最终输出，包含了机器人进行决策所需的所有信息
+ * 这是一个**不可变对象**，一旦创建，其值就不能被修改
+ * 这种设计使得它在多线程环境中（Pipeline线程写，OpMode主线程读）是线程安全的
  * @author BlueDarkUP
  * @version 2025/6
  * To My Lover - Zyy

@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.AutoCode;
 
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.BezierCurve;
@@ -10,7 +8,6 @@ import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
-import com.pedropathing.util.Constants;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -19,10 +16,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
-import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
-import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
-import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
 
 /**
  * This is the fucking best autonomous code in the world.

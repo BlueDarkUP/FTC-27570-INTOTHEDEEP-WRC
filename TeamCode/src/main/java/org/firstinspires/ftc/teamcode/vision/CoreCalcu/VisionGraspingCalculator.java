@@ -1,10 +1,15 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.vision.CoreCalcu;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.API.PositionCalculator;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics;
 import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+
 /**
+ * 通过一系列复杂的、基于经验和物理模型的校正与计算
+ * 最终转化为可直接用于控制舵机的具体指令
  * @author BlueDarkUP
  * @version 2025/6
  * To My Lover - Zyy
@@ -12,24 +17,27 @@ import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
 public class VisionGraspingCalculator {
 
     /**
-     * X轴非线性修正指数
+     * 距离非线性修正指数
+     * 用于修正视觉估算距离与真实距离之间的非线性关系
+     * 值 > 1.0 会放大较远的距离，压缩较近的距离
+     * 值 < 1.0 则相反
      */
     public static final double DISTANCE_CORRECTION_EXPONENT = 1.06;
-    public static final double DISTANCE_CORRECTION_REFERENCE_CM = 24.0;
+    public static final double DISTANCE_CORRECTION_REFERENCE_CM = 24.0;  // 进行指数修正时的参考距离，修正效果会围绕这个基准点展开
 
     /**
-     * 左侧目标瞄准修正角度
-     * 当目标在视野左侧时，A舵机角度会加上此值
+     * 左侧目标瞄准修正角度（度）。
+     * 当目标在视野左侧时（beta > 0），A舵机（转向舵机）的角度会加上此值。
+     * 用于补偿由于透视或机械结构导致的系统性瞄准偏差。
      */
     public static final double LEFT_SIDE_AIM_CORRECTION_DEGREES = -15.0;
 
     /**
      * 横向距离衰减因子
-     * 用于修正因目标偏离中心线导致的透视距离误差
-     * 值越大，衰减效果越强
-     * 0.0 = 无衰减
+     * 用于修正因目标偏离摄像头中心线导致的透视距离误差（即边缘物体看起来比实际更远）
+     * 值越大，衰减效果越强。设为 0.0 则关闭此修正
      */
-    public static final double LATERAL_DISTANCE_ATTENUATION_FACTOR = 0.007;
+    public static final double LATERAL_DISTANCE_ATTENUATION_FACTOR = 0.005;
 
     /**
      * 主要的计算方法。接收视觉结果和Telemetry对象，返回一个GraspingTarget对象
