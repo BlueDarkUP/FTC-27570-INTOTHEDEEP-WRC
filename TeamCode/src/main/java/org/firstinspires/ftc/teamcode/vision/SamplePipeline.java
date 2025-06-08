@@ -1,4 +1,3 @@
-// Filename: SamplePipeline.java
 package org.firstinspires.ftc.teamcode.vision;
 
 import org.opencv.core.Core;
@@ -37,7 +36,6 @@ public class SamplePipeline extends OpenCvPipeline {
 
     public SamplePipeline(VisionGraspingAPI apiInstance) {
         this.apiInstance = apiInstance;
-        // 预计算原始尺寸下的目标区域轮廓
         Mat dummyFrame = new Mat(VisionConstants.CAMERA_HEIGHT, VisionConstants.CAMERA_WIDTH, CvType.CV_8UC3);
         TargetZoneInfo info = drawTargetZoneCm(dummyFrame, VisionConstants.PIXELS_PER_CM, VisionConstants.CAMERA_WIDTH, VisionConstants.CAMERA_HEIGHT, VisionConstants.TARGET_RECT_WIDTH_CM, VisionConstants.TARGET_RECT_HEIGHT_CM, VisionConstants.TARGET_RECT_OFFSET_X_CM, VisionConstants.TARGET_RECT_OFFSET_Y_CM, VisionConstants.TARGET_RECT_COLOR, VisionConstants.TARGET_RECT_THICKNESS, VisionConstants.ARC_SAMPLING_POINTS);
         targetZoneContourAtOriginalScale = info.targetContour;
@@ -92,7 +90,7 @@ public class SamplePipeline extends OpenCvPipeline {
                 targetZoneContourAtProcessedScale = targetZoneContourAtProcessedScaleHolder;
             }
             if (targetZoneCenterXAtOriginalScale != null) targetZoneCenterXAtProcessedScale = (int)Math.round(targetZoneCenterXAtOriginalScale * processingScale);
-            if (targetRectY1AtOriginalScale != null) targetRectY1AtProcessedScale = (int)Math.round(targetRectY1AtOriginalScale * processingScale);
+            if (targetRectY1AtOriginalScale != null) targetRectY1AtOriginalScale = (int)Math.round(targetRectY1AtOriginalScale * processingScale);
             if (targetRectY2AtOriginalScale != null) targetRectY2AtProcessedScale = (int)Math.round(targetRectY2AtOriginalScale * processingScale);
         } else {
             bgr.copyTo(processedFrameForDetection);
@@ -137,7 +135,11 @@ public class SamplePipeline extends OpenCvPipeline {
             }
         }
 
-        drawDetectionsAndSetResult(allDetectedCubes, processingScale, targetZoneContourAtProcessedScale, targetZoneCenterXAtProcessedScale, targetRectY1AtProcessedScale, targetRectY2AtProcessedScale, VisionConstants.PIXELS_PER_CM, targetRectY2AtOriginalScale);
+        Integer cameraCenterXOriginal = VisionConstants.CAMERA_WIDTH / 2;
+
+        drawDetectionsAndSetResult(allDetectedCubes, processingScale, targetZoneContourAtProcessedScale,
+                targetZoneCenterXAtProcessedScale, targetRectY1AtProcessedScale, targetRectY2AtProcessedScale,
+                VisionConstants.PIXELS_PER_CM, targetRectY2AtOriginalScale, cameraCenterXOriginal);
 
         if (VisionConstants.ENABLE_DEBUG_VIEW) {
             drawDebugOverlays(bgr);
@@ -147,21 +149,38 @@ public class SamplePipeline extends OpenCvPipeline {
         return inputRGBA;
     }
 
-    private void drawDetectionsAndSetResult(List<DetectedCube> cubes, double processingScale, MatOfPoint targetZoneContourProcessed, Integer targetZoneCenterXAtProcessedScale, Integer targetRectY1Processed, Integer targetRectY2Processed, double originalPixelsPerCm, double targetRectY2OriginalScale) {
+    private void drawDetectionsAndSetResult(List<DetectedCube> cubes, double processingScale,
+                                            MatOfPoint targetZoneContourProcessed, Integer targetZoneCenterXAtProcessedScale,
+                                            Integer targetRectY1Processed, Integer targetRectY2Processed,
+                                            double originalPixelsPerCm, double targetRectY2OriginalScale,
+                                            Integer cameraCenterXOriginal) {
+
         if (cubes.isEmpty()) {
-            apiInstance.updateLatestResult(new VisionTargetResult());
+            apiInstance.updateLatestResult(new VisionTargetResult(false, "None", 0, 0, 0, 0, 0.0));
             return;
         }
 
-        ArrayList<CandidateInfo> candidates = new ArrayList<>();
+        ArrayList<CandidateInfo> candidatesInZone = new ArrayList<>();
+        ArrayList<CandidateInfo> candidatesOutOfZone = new ArrayList<>();
         double circleRadiusP = (VisionConstants.TARGET_RECT_WIDTH_CM / 2.0) * originalPixelsPerCm * processingScale;
 
         for (int i = 0; i < cubes.size(); i++) {
             DetectedCube cube = cubes.get(i);
             Point centerP = new Point(cube.centerXImagePx, cube.centerYImagePx);
+
+            double horizontalOffsetPx = (centerP.x / processingScale) - cameraCenterXOriginal;
+            double horizontalOffsetCm = horizontalOffsetPx / originalPixelsPerCm;
+
+            boolean isValidForGrasping = true;
+            if (targetZoneContourProcessed != null && !targetZoneContourProcessed.empty()) {
+                targetZoneContourProcessed.convertTo(tempContour2f, CvType.CV_32F);
+                if (Imgproc.pointPolygonTest(tempContour2f, centerP, false) < 0) {
+                    isValidForGrasping = false;
+                }
+            }
+
             Point intersectP = null;
             double lineAngle = 0.0, distCm = Double.POSITIVE_INFINITY;
-
             if (targetZoneCenterXAtProcessedScale != null && circleRadiusP > 0) {
                 double distToLine = Math.abs(targetZoneCenterXAtProcessedScale - centerP.x);
                 if (distToLine <= circleRadiusP + 1) {
@@ -171,32 +190,49 @@ public class SamplePipeline extends OpenCvPipeline {
                     if (distPx >= 0) distCm = distPx / originalPixelsPerCm;
                 }
             }
-
-            boolean isValid = true;
-            if (targetZoneContourProcessed != null && !targetZoneContourProcessed.empty()) {
-                targetZoneContourProcessed.convertTo(tempContour2f, CvType.CV_32F);
-                if (Imgproc.pointPolygonTest(tempContour2f, centerP, false) < 0) isValid = false;
+            if (isValidForGrasping && (intersectP == null || !(targetRectY1Processed <= intersectP.y && intersectP.y <= targetRectY2Processed))) {
+                isValidForGrasping = false;
             }
-            if (isValid && (intersectP == null || !(targetRectY1Processed <= intersectP.y && intersectP.y <= targetRectY2Processed))) isValid = false;
 
-            if (isValid) {
-                CandidateInfo c = new CandidateInfo();
-                c.cubeIndex = i; c.primaryScore = distCm; c.secondaryScore = Math.abs(cube.angleDeg - 90.0) + Math.abs(lineAngle);
-                c.lineAngleDeg = lineAngle; c.centerInProcessed = centerP; c.intersectionPointProcessed = intersectP; c.distanceCm = distCm;
-                candidates.add(c);
+            CandidateInfo c = new CandidateInfo();
+            c.cubeIndex = i;
+            c.primaryScore = distCm;
+            c.secondaryScore = Math.abs(cube.angleDeg - 90.0) + Math.abs(lineAngle);
+            c.lineAngleDeg = lineAngle;
+            c.centerInProcessed = centerP;
+            c.intersectionPointProcessed = intersectP;
+            c.distanceCm = distCm;
+            c.horizontalOffsetCm = horizontalOffsetCm;
+
+            if (isValidForGrasping) {
+                candidatesInZone.add(c);
+            } else {
+                candidatesOutOfZone.add(c);
             }
         }
 
-        if (!candidates.isEmpty()) {
-            candidates.sort((a, b) -> (Math.abs(a.primaryScore - b.primaryScore) > 1e-6) ? Double.compare(a.primaryScore, b.primaryScore) : Double.compare(a.secondaryScore, b.secondaryScore));
-            if (candidates.get(0).primaryScore != Double.POSITIVE_INFINITY) {
-                DetectedCube bestCube = cubes.get(candidates.get(0).cubeIndex);
-                apiInstance.updateLatestResult(new VisionTargetResult(true, bestCube.color, candidates.get(0).distanceCm, bestCube.angleDeg, candidates.get(0).lineAngleDeg));
+        int graspableCount = candidatesInZone.size();
+        double nextTargetOffset = 0.0;
+
+        if (graspableCount > 1) {
+            nextTargetOffset = 0.0;
+        } else {
+            if (!candidatesOutOfZone.isEmpty()) {
+                candidatesOutOfZone.sort((a, b) -> Double.compare(Math.abs(a.horizontalOffsetCm), Math.abs(b.horizontalOffsetCm)));
+                nextTargetOffset = candidatesOutOfZone.get(0).horizontalOffsetCm;
+            }
+        }
+
+        if (graspableCount > 0) {
+            candidatesInZone.sort((a, b) -> (Math.abs(a.primaryScore - b.primaryScore) > 1e-6) ? Double.compare(a.primaryScore, b.primaryScore) : Double.compare(a.secondaryScore, b.secondaryScore));
+            if (candidatesInZone.get(0).primaryScore != Double.POSITIVE_INFINITY) {
+                DetectedCube bestCube = cubes.get(candidatesInZone.get(0).cubeIndex);
+                apiInstance.updateLatestResult(new VisionTargetResult(true, bestCube.color, candidatesInZone.get(0).distanceCm, bestCube.angleDeg, candidatesInZone.get(0).lineAngleDeg, graspableCount, nextTargetOffset));
             } else {
-                apiInstance.updateLatestResult(new VisionTargetResult());
+                apiInstance.updateLatestResult(new VisionTargetResult(false, "None", 0, 0, 0, 0, nextTargetOffset));
             }
         } else {
-            apiInstance.updateLatestResult(new VisionTargetResult());
+            apiInstance.updateLatestResult(new VisionTargetResult(false, "None", 0, 0, 0, 0, nextTargetOffset));
         }
     }
 

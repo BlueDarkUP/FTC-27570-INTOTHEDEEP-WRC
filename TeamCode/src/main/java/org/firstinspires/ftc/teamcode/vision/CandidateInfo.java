@@ -1,3 +1,4 @@
+// Filename: CandidateInfo.java
 package org.firstinspires.ftc.teamcode.vision;
 
 import org.opencv.core.Point;
@@ -12,4 +13,6 @@ public class CandidateInfo {
     int cubeIndex;
     double primaryScore, secondaryScore, lineAngleDeg, distanceCm;
     Point centerInProcessed, intersectionPointProcessed;
+    // 新增字段
+    double horizontalOffsetCm; // 候选目标相对于摄像头中心线的横向偏移量
 }
