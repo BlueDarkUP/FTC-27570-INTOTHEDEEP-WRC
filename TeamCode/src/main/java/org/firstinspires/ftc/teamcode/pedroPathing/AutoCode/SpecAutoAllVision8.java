@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.AutoCode;
 
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.BezierCurve;
@@ -17,7 +19,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
+import org.firstinspires.ftc.teamcode.vision.GraspingTarget;
 import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.VisionTargetResult;
 
 /**
  * This is the fucking best autonomous code in the world.
@@ -29,7 +34,7 @@ import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
 public class SpecAutoAllVision8 extends OpMode{
     private Follower follower;
     private AlgorithmLibrary Algorithm;
-    private VisionGraspingAPI visionAPI;
+    public static VisionGraspingAPI visionAPI;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     /** This is the variable where we store the state of our auto.
@@ -102,7 +107,7 @@ public class SpecAutoAllVision8 extends OpMode{
             case 2:
                 if(!follower.isBusy()) {
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                    Algorithm.VisionIntake(visionAPI);
+                    VisionIntake();
                     follower.followPath(GetSpec[Specnum-1],true);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
@@ -197,6 +202,18 @@ public class SpecAutoAllVision8 extends OpMode{
     /** We do not use this because everything should automatically disable **/
     @Override
     public void stop() {
+    }
+    public void VisionIntake() throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
+            if(graspTarget.isInRange){
+                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                Algorithm.ForwardGrabController("Open");
+                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.SlideController("Back");
+            }
+        }
     }
 }
 

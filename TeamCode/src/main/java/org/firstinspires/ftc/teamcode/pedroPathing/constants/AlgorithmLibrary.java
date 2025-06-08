@@ -140,18 +140,7 @@ public class AlgorithmLibrary {
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(0.113); // Or a constant*/
     }
-    public void VisionIntake(VisionGraspingAPI visionAPI) throws InterruptedException {
-        VisionTargetResult result = visionAPI.getLatestResult();
-        if (result.isTargetFound) {
-            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
-            if(graspTarget.isInRange){
-                BackGrabAction(ConstantMap.BackGrab_Initialize);
-                ForwardGrabController("Open");
-                performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
-                SlideController("Back");
-            }
-        }
-    }
+
     public void ArmController(String flag){
         if(Objects.equals(flag,"Up")){
             LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
