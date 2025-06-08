@@ -1,131 +1,40 @@
-## TeamCode Module
+# TeamCode 模块 | TeamCode Module
 
-Welcome!
+欢迎来到 **27570 "INTO THE DEEP" 赛季**的 `TeamCode` 模块！
+Welcome to the `TeamCode` module for the **27570 "INTO THE DEEP" Season**!
 
-This module, TeamCode, is the place where you will write/paste the code for your team's
-robot controller App. This module is currently empty (a clean slate) but the
-process for adding OpModes is straightforward.
+这个目录是存放我们队伍所有自定义机器人代码的核心位置，包括自主程序、遥控操作逻辑、以及各种工具和算法库。
+This directory is the central hub for all our team's custom robot code, including autonomous programs, tele-operated logic, and various utilities and algorithm libraries.
 
-## Creating your own OpModes
+## 主要功能模块 | Key Feature Modules
 
-The easiest way to create your own OpMode is to copy a Sample OpMode and make it your own.
+以下是我们队伍在 `TeamCode` 中开发和维护的主要功能模块：
+Below are the primary feature modules developed and maintained by our team within `TeamCode`:
 
-Sample opmodes exist in the FtcRobotController module.
-To locate these samples, find the FtcRobotController module in the "Project/Android" tab.
+*   **`pedroPathing/`**
+    *   **中文**: 包含我们先进的自主导航系统。该系统支持复杂的路径跟随、基于贝塞尔曲线的平滑轨迹生成、路径链组合、状态机控制以及模块化的机器人动作。
+    *   **English**: Contains our advanced autonomous navigation system. This system supports sophisticated path following, smooth trajectory generation using Bezier curves, path chaining, state machine control, and modular robot actions.
 
-Expand the following tree elements:
- FtcRobotController/java/org.firstinspires.ftc.robotcontroller/external/samples
+*   **`vision/`**
+    *   **中文**: 存放我们的智能视觉抓取系统。该系统利用OpenCV进行目标识别与定位，采用分层架构，并能在TeleOp模式下提供智能辅助。更详细的文档请参见 `vision/readme.md`。
+    *   **English**: Houses our intelligent vision grasping system. This system utilizes OpenCV for target identification and localization, features a layered architecture, and provides smart assisted grasping in TeleOp mode. For more detailed documentation, please refer to `vision/readme.md`.
 
-### Naming of Samples
+*   **`API/`**
+    *   **中文**: 提供核心的机器人运动学和位置计算工具。例如 `ServoKinematics.java` 用于伺服驱动机构的运动学解算，`PositionCalculator.java` 可能用于更通用的位置相关计算。
+    *   **English**: Provides core utilities for robot kinematics and position calculations. For example, `ServoKinematics.java` is used for the kinematic solutions of servo-driven mechanisms, and `PositionCalculator.java` may be used for more general position-related computations.
 
-To gain a better understanding of how the samples are organized, and how to interpret the
-naming system, it will help to understand the conventions that were used during their creation.
+*   **`APIuser/`**
+    *   **中文**: 包含基于 `API/` 中工具开发的上层应用或特定机构的控制器。例如 `Degree2Pos.java` 用于角度到伺服位置的转换，`SlideControl.java` 用于控制线性滑轨等。
+    *   **English**: Contains higher-level applications or controllers for specific mechanisms, likely developed using the tools in `API/`. For instance, `Degree2Pos.java` handles angle-to-servo position conversions, and `SlideControl.java` is for controlling linear slides.
 
-These conventions are described (in detail) in the sample_conventions.md file in this folder.
+*   **`ReadEncoder.java`**
+    *   **中文**: 这是一个工具性的OpMode，用于读取并显示机器人驱动电机的编码器值，方便调试和标定。
+    *   **English**: This is a utility OpMode designed to read and display the encoder values of the robot's drive motors, useful for debugging and calibration.
 
-To summarize: A range of different samples classes will reside in the java/external/samples.
-The class names will follow a naming convention which indicates the purpose of each class.
-The prefix of the name will be one of the following:
+## 使用与贡献 | Usage and Contribution
 
-Basic:  	This is a minimally functional OpMode used to illustrate the skeleton/structure
-            of a particular style of OpMode.  These are bare bones examples.
+请在开发新功能或修改现有代码时，遵循团队的编码规范和版本控制流程。我们鼓励模块化设计和清晰的文档注释。
+When developing new features or modifying existing code, please adhere to the team's coding standards and version control practices. We encourage modular design and clear documentation.
 
-Sensor:    	This is a Sample OpMode that shows how to use a specific sensor.
-            It is not intended to drive a functioning robot, it is simply showing the minimal code
-            required to read and display the sensor values.
-
-Robot:	    This is a Sample OpMode that assumes a simple two-motor (differential) drive base.
-            It may be used to provide a common baseline driving OpMode, or
-            to demonstrate how a particular sensor or concept can be used to navigate.
-
-Concept:	This is a sample OpMode that illustrates performing a specific function or concept.
-            These may be complex, but their operation should be explained clearly in the comments,
-            or the comments should reference an external doc, guide or tutorial.
-            Each OpMode should try to only demonstrate a single concept so they are easy to
-            locate based on their name.  These OpModes may not produce a drivable robot.
-
-After the prefix, other conventions will apply:
-
-* Sensor class names are constructed as:    Sensor - Company - Type
-* Robot class names are constructed as:     Robot - Mode - Action - OpModetype
-* Concept class names are constructed as:   Concept - Topic - OpModetype
-
-Once you are familiar with the range of samples available, you can choose one to be the
-basis for your own robot.  In all cases, the desired sample(s) needs to be copied into
-your TeamCode module to be used.
-
-This is done inside Android Studio directly, using the following steps:
-
- 1) Locate the desired sample class in the Project/Android tree.
-
- 2) Right click on the sample class and select "Copy"
-
- 3) Expand the  TeamCode/java folder
-
- 4) Right click on the org.firstinspires.ftc.teamcode folder and select "Paste"
-
- 5) You will be prompted for a class name for the copy.
-    Choose something meaningful based on the purpose of this class.
-    Start with a capital letter, and remember that there may be more similar classes later.
-
-Once your copy has been created, you should prepare it for use on your robot.
-This is done by adjusting the OpMode's name, and enabling it to be displayed on the
-Driver Station's OpMode list.
-
-Each OpMode sample class begins with several lines of code like the ones shown below:
-
-```
- @TeleOp(name="Template: Linear OpMode", group="Linear Opmode")
- @Disabled
-```
-
-The name that will appear on the driver station's "opmode list" is defined by the code:
- ``name="Template: Linear OpMode"``
-You can change what appears between the quotes to better describe your opmode.
-The "group=" portion of the code can be used to help organize your list of OpModes.
-
-As shown, the current OpMode will NOT appear on the driver station's OpMode list because of the
-  ``@Disabled`` annotation which has been included.
-This line can simply be deleted , or commented out, to make the OpMode visible.
-
-
-
-## ADVANCED Multi-Team App management:  Cloning the TeamCode Module
-
-In some situations, you have multiple teams in your club and you want them to all share
-a common code organization, with each being able to *see* the others code but each having
-their own team module with their own code that they maintain themselves.
-
-In this situation, you might wish to clone the TeamCode module, once for each of these teams.
-Each of the clones would then appear along side each other in the Android Studio module list,
-together with the FtcRobotController module (and the original TeamCode module).
-
-Selective Team phones can then be programmed by selecting the desired Module from the pulldown list
-prior to clicking to the green Run arrow.
-
-Warning:  This is not for the inexperienced Software developer.
-You will need to be comfortable with File manipulations and managing Android Studio Modules.
-These changes are performed OUTSIDE of Android Studios, so close Android Studios before you do this.
- 
-Also.. Make a full project backup before you start this :)
-
-To clone TeamCode, do the following:
-
-Note: Some names start with "Team" and others start with "team".  This is intentional.
-
-1)  Using your operating system file management tools, copy the whole "TeamCode"
-    folder to a sibling folder with a corresponding new name, eg: "Team0417".
-
-2)  In the new Team0417 folder, delete the TeamCode.iml file.
-
-3)  the new Team0417 folder, rename the "src/main/java/org/firstinspires/ftc/teamcode" folder
-    to a matching name with a lowercase 'team' eg:  "team0417".
-
-4)  In the new Team0417/src/main folder, edit the "AndroidManifest.xml" file, change the line that contains
-         package="org.firstinspires.ftc.teamcode"
-    to be
-         package="org.firstinspires.ftc.team0417"
-
-5)  Add:    include ':Team0417' to the "/settings.gradle" file.
-    
-6)  Open up Android Studios and clean out any old files by using the menu to "Build/Clean Project""
+祝编程愉快！
+Happy coding!
