@@ -34,7 +34,7 @@ public class TeleOp_27570 extends OpMode {
     private VisionGraspingAPI visionAPI;
     private boolean BackGrabFlag=false,BackGrabLastFlag=false,IntakeRotateFlag=false,IntakeRotateLastFlag=false;
     private boolean ClawFlag=false,ClawLastFlag=false,IntakeSlideFlag = false,IntakeSlideLastFlag = false;
-    private boolean ArmFlag = false,ArmLastFlag = false;
+    private boolean ArmFlag = false,ArmLastFlag = false,CameraArmFlag = false,CameraArmLastFlag = false;
     private boolean EmergencyFlag = false;
     private boolean VLflag = false;
 
@@ -90,6 +90,7 @@ public class TeleOp_27570 extends OpMode {
         SlideController();
         EmergencyInitMotors();
         ArmUpController();
+        CameraArmController();
         ClimbController();
         try {
             VisionController();
@@ -127,6 +128,20 @@ public class TeleOp_27570 extends OpMode {
             }
             VLflag = gamepad1.right_stick_button;
         }
+    }
+    private void CameraArmController(){
+        if(gamepad1.dpad_down&&!CameraArmLastFlag){
+            if(CameraArmFlag){
+                Algorithm.CameraArmController(ConstantMap.Camera_Arm_PutDown_Position);
+                CameraArmFlag = false;
+            }
+            else {
+                CameraArmFlag = true;
+                Algorithm.BackGrabAction(ConstantMap.Camera_Arm_Initialize_Position);
+            }
+        }
+
+        CameraArmLastFlag = gamepad1.dpad_down;
     }
     private void BackGrabController(){
         if(gamepad1.square&&!BackGrabLastFlag){

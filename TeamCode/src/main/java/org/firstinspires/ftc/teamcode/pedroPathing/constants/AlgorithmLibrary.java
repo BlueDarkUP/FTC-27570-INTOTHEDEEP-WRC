@@ -88,8 +88,9 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
     public void Initialize_All_For_TeleOp() throws InterruptedException {
         //Initialize motor
@@ -115,13 +116,14 @@ public class AlgorithmLibrary {
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
         intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
     }
 
     public void Initialize_All_For_Vision() throws InterruptedException {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(0.62);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
@@ -152,7 +154,9 @@ public class AlgorithmLibrary {
         BackArmAction(ConstantMap.BACK_ARM_RESET_POSITION);
         LiftAction(ConstantMap.Lift_Down_Position);
     }
-
+    public void CameraArmController(double position){
+        camera_arm.setPosition(position);
+    }
     public void IntakeController(String flag) throws InterruptedException {
         if(Objects.equals(flag,"Take")) {
             arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
