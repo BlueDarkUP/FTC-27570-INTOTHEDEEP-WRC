@@ -27,7 +27,7 @@ public class PositionCalculator {
         double commonTerm = ((positionMax - positionMin) / rotateAngle) * userInput;
         double rawResult;
         if (reverse) {
-            rawResult = 1.0 - commonTerm;
+            rawResult = 1.0 - commonTerm - positionMin;
         } else {
             rawResult = commonTerm + positionMin;
         }
