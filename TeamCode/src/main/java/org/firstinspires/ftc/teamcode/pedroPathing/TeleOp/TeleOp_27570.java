@@ -109,8 +109,8 @@ public class TeleOp_27570 extends OpMode {
 
     @Override
     public void stop() {
-
-        visionAPI.close();
+        if(visionAPI != null)
+            visionAPI.close();
     }
     private void VisionController() throws InterruptedException {
         VisionTargetResult result = visionAPI.getLatestResult();
