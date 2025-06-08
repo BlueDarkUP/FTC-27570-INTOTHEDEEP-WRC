@@ -39,49 +39,50 @@ public class SpecAutoAllVision8 extends OpMode{
     private int pathState;
 
     private final Pose startPose = new Pose(8.955, 63, Math.toRadians(0));
-    private final Pose[] scorePose  = {
-            new Pose(39, 76.5, Math.toRadians(0)),
-            new Pose(39, 75.2, Math.toRadians(0)),
-            new Pose(39, 73.8, Math.toRadians(0)),
-            new Pose(39, 72.7, Math.toRadians(0)),
-            new Pose(39, 71.5, Math.toRadians(0)),
-            new Pose(39, 70, Math.toRadians(0)),
-            new Pose(39, 68.5, Math.toRadians(0)),
-            new Pose(39, 67, Math.toRadians(0))
-    };
+    private final Pose scorePose = new Pose(ConstantMap.ScorePoseX, ConstantMap.ScorePoseY_LeftTop, Math.toRadians(0));
 
 
     private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
     private final Pose parkPose = new Pose(10, 10, Math.toRadians(0));
 
     private int Specnum = 1;
+    private static double nextPointDistance = 0;
 
     private Path scorePreload, park;
-    private PathChain[] Scoring;
-    private PathChain[] GetSpec;
+    private PathChain Scoring;
+    private PathChain GetSpec;
     public void buildPaths() {
 
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
-        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(scorePose[0])));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose[0].getHeading());
+        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(scorePose)));
+        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
-        for(int i = 0; i < 7; i++){
-            GetSpec[i] = follower.pathBuilder()
-                    .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
-                    .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
-                    .build();
-        }
-        for(int i = 0; i < 7; i++){
-            Scoring[i] = follower.pathBuilder()
-                    .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose[i+1])))
-                    .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose[i+1].getHeading())
-                    .build();
-        }
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(scorePose),new Point(GetSpecPosition)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
+                .build();
 
-        park = new Path(new BezierCurve(new Point(scorePose[7]),new Point(parkPose)));
-        park.setLinearHeadingInterpolation(scorePose[7].getHeading(), parkPose.getHeading());
+        Scoring= follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose)))
+                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
+                .build();
+
+        park = new Path(new BezierCurve(new Point(scorePose),new Point(parkPose)));
+        park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
+    public void buildNextPath(){
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(GetSpecPosition)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
+                .build();
 
+        Scoring= follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance))))
+                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
+                .build();
+        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(parkPose)));
+        park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
+    }
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
      * Everytime the switch changes case, it will reset the timer. (This is because of the setPathState() method)
      * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
@@ -105,8 +106,9 @@ public class SpecAutoAllVision8 extends OpMode{
                 if(!follower.isBusy()) {
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     VisionIntake();
-                    follower.followPath(GetSpec[Specnum-1],true);
+                    follower.followPath(GetSpec,true);
                     follower.update();
+                    buildNextPath();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
                     setPathState(3);
@@ -116,7 +118,7 @@ public class SpecAutoAllVision8 extends OpMode{
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController("Open");
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-                    follower.followPath(Scoring[Specnum-1],true);
+                    follower.followPath(Scoring,true);
                     follower.update();
                     //Algorithm.ArmController("Up");
                     Specnum++;
@@ -177,8 +179,6 @@ public class SpecAutoAllVision8 extends OpMode{
         Algorithm.Initialize_All_For_Autonomous();
         visionAPI = new VisionGraspingAPI();
         visionAPI.init(hardwareMap);
-        GetSpec = new  PathChain[7];
-        Scoring = new PathChain[7];
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
@@ -211,6 +211,11 @@ public class SpecAutoAllVision8 extends OpMode{
                 Algorithm.ForwardGrabController("Open");
                 Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
                 Algorithm.SlideController("Back");
+            }
+            if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
+                nextPointDistance = 0;
+            }else {
+                nextPointDistance = 0.393700787 * result.nextTargetHorizontalOffsetCm;
             }
         }
     }

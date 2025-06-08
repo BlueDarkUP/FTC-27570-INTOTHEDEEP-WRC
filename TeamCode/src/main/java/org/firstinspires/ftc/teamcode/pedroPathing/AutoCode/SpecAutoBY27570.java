@@ -17,6 +17,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
+import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
 
 /**
  * This is the fucking best autonomous code in the world.
@@ -28,89 +32,83 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 public class SpecAutoBY27570 extends OpMode{
     private Follower follower;
     private AlgorithmLibrary Algorithm;
+    public static VisionGraspingAPI visionAPI;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     /** This is the variable where we store the state of our auto.
      * It is used by the pathUpdate method. */
     private int pathState;
     private final Pose startPose = new Pose(8.955, 63, Math.toRadians(0));
-    private final Pose GP1= new Pose(50,35,Math.toRadians(0));
-    private final Pose RP1 = new Pose(50,23,Math.toRadians(0));
-    //Control point between GP1 and RP1
-    private final Pose RP1C1 = new Pose(64.7,37);
-    private final Pose RP1C2 = new Pose(61.8,22.5);
-    private final Pose Push1 = new Pose(20,23,Math.toRadians(0));
-    private final Pose RP2 = new Pose(50,14,Math.toRadians(0));
-    //Control point between RP1 and RP2
-    private final Pose RP2C1 = new Pose(64.7,22.9);
-    private final Pose RP2C2 = new Pose(60.4,13.1);
-    private final Pose Push2 = new Pose(20,14,Math.toRadians(0));
-
-
-    private final Pose[] scorePose  = {
-            new Pose(39, 76, Math.toRadians(0)),
-            new Pose(39, 73, Math.toRadians(0)),
-            new Pose(39, 71, Math.toRadians(0)),
-            new Pose(39, 68, Math.toRadians(0)),
-    };
-
-
     private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
-    private final Pose GSControlP = new Pose(20.8,32.7);
+    private final Pose scorePose = new Pose(ConstantMap.ScorePoseX, ConstantMap.ScorePoseY_LeftTop, Math.toRadians(0));
+    private final Pose Put3rdSpecPose = new Pose(10,23.5,Math.toRadians(0));
+    private final Pose PickUp1Pose = new Pose(28.5,23.5,Math.toRadians(0));
+    private final Pose PutDown1Pose = new Pose(10,12,Math.toRadians(0));
+    private final Pose PickUp2Pose = new Pose(28.5,12,Math.toRadians(0));
+
     private final Pose parkPose = new Pose(10, 10, Math.toRadians(0));
 
-    private int Specnum = 0;
+    private int Specnum = 1;
+    private static double nextPointDistance = 0;
 
 
     private Path scorePreload, park;
-    private PathChain Push;
-    private PathChain[] Scoring;
-    private PathChain[] GetSpec;
+    private PathChain Put3rdSpecPath,Get1SpecPath,Put1SpecPath,Get2SpecPath,Put2SpecPath;
+    private PathChain Scoring;
+    private PathChain GetSpec;
 
     public void buildPaths() {
 
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
-        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(scorePose[0])));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose[0].getHeading());
-        Push = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(GP1)))
-                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),GP1.getHeading())
+        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(scorePose)));
+        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
-                .addPath(new BezierCurve(new Point(GP1),new Point(RP1C1),new Point(RP1C2),new Point(RP1)))
-                .setLinearHeadingInterpolation(GP1.getHeading(),RP1.getHeading())
-
-                .addPath(new BezierLine(new Point(RP1),new Point(Push1)))
-                .setLinearHeadingInterpolation(RP1.getHeading(),Push1.getHeading())
-
-                .addPath(new BezierLine(new Point(Push1),new Point(RP1)))
-                .setLinearHeadingInterpolation(Push1.getHeading(),RP1.getHeading())
-
-                .addPath(new BezierCurve(new Point(RP1),new Point(RP2C1),new Point(RP2C2),new Point(RP2)))
-                .setLinearHeadingInterpolation(RP1.getHeading(),RP2.getHeading())
-
-                .addPath(new BezierLine(new Point(RP2),new Point(Push2)))
-                .setLinearHeadingInterpolation(RP2.getHeading(),Push2.getHeading())
-
-                .addPath(new BezierCurve(new Point(Push2),new Point(GSControlP),new Point(GetSpecPosition)))
-                .setLinearHeadingInterpolation(Push2.getHeading(),GetSpecPosition.getHeading())
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(scorePose),new Point(GetSpecPosition)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
                 .build();
-        for(int i = 0; i < 4; i++){
-            GetSpec[i] = follower.pathBuilder()
-                    .addPath(new BezierLine(new Point(scorePose[i]),new Point(GetSpecPosition)))
-                    .setLinearHeadingInterpolation(scorePose[i].getHeading(),GetSpecPosition.getHeading())
-                    .build();
-        }
-        for(int i = 0; i < 3; i++){
-            Scoring[i] = follower.pathBuilder()
-                    .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose[i+1])))
-                    .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose[i+1].getHeading())
-                    .build();
-        }
 
-        park = new Path(new BezierCurve(new Point(scorePose[3]),new Point(parkPose)));
-        park.setLinearHeadingInterpolation(scorePose[3].getHeading(), parkPose.getHeading());
+        Scoring= follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(scorePose)))
+                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
+                .build();
+        Put3rdSpecPath = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(scorePose),new Point(Put3rdSpecPose)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(),Put3rdSpecPose.getHeading())
+                .build();
+        Get1SpecPath = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(Put3rdSpecPose),new Point(PickUp1Pose)))
+                .setLinearHeadingInterpolation(Put3rdSpecPose.getHeading(),PickUp1Pose.getHeading())
+                .build();
+        Put1SpecPath = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(PickUp1Pose),new Point(PutDown1Pose)))
+                .setLinearHeadingInterpolation(PickUp1Pose.getHeading(),PutDown1Pose.getHeading())
+                .build();
+        Get2SpecPath = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(PutDown1Pose),new Point(PickUp2Pose)))
+                .setLinearHeadingInterpolation(PutDown1Pose.getHeading(),PickUp2Pose.getHeading())
+                .build();
+        Put2SpecPath = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(PickUp2Pose),new Point(GetSpecPosition)))
+                .setLinearHeadingInterpolation(PickUp2Pose.getHeading(),GetSpecPosition.getHeading())
+                .build();
+
+        park = new Path(new BezierCurve(new Point(scorePose),new Point(parkPose)));
+        park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
+    public void buildNextPath(){
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(GetSpecPosition)))
+                .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
+                .build();
 
+        Scoring= follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance))))
+                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
+                .build();
+        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(parkPose)));
+        park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
+    }
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
      * Everytime the switch changes case, it will reset the timer. (This is because of the setPathState() method)
      * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
@@ -125,13 +123,15 @@ public class SpecAutoBY27570 extends OpMode{
             case 1:
                 if(!follower.isBusy()){
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    VisionIntake();
                     Specnum++;
                     if(Specnum>=3) {
                         setPathState(3);
                         break;
                     }
-                    follower.followPath(GetSpec[Specnum-1],true);
+                    follower.followPath(GetSpec,true);
                     follower.update();
+                    buildNextPath();
                     //Algorithm.SlideController("Back");
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
@@ -140,9 +140,9 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 2:
                 if(!follower.isBusy()){
-                    //Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController("Open");
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-                    follower.followPath(Scoring[Specnum-1],true);
+                    follower.followPath(Scoring,true);
                     follower.update();
                     //Algorithm.ArmController("Up");
                     setPathState(1);
@@ -150,38 +150,72 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 3:
                 if(!follower.isBusy()){
-                    follower.followPath(Push);
+                    follower.followPath(Put3rdSpecPath);
+                    follower.update();
+                    buildNextPath();
                     //Algorithm.SlideController("Back");
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
-                    follower.update();
-                    setPathState(5);
+                    setPathState(4);
                 }
             case 4:
-                if(!follower.isBusy()) {
-                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                    follower.followPath(GetSpec[3],true);
+                if(!follower.isBusy()){
+                    follower.followPath(Get1SpecPath);
                     follower.update();
-                    Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    //Algorithm.ArmController("Down");
                     setPathState(5);
                     break;
                 }
             case 5:
                 if(!follower.isBusy()){
-                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-                    follower.followPath(Scoring[2],true);
+                    VisionIntake();
+                    follower.followPath(Put1SpecPath);
                     follower.update();
-                    //Algorithm.ArmController("Up");
-                    Specnum++;
-                    if(Specnum<7) {
-                        setPathState(4);
-                        break;
-                    }
                     setPathState(6);
                     break;
                 }
             case 6:
+                if(!follower.isBusy()){
+                    Algorithm.ForwardGrabController("Open");
+                    follower.followPath(Get2SpecPath);
+                    follower.update();
+                    setPathState(7);
+                    break;
+                }
+            case 7:
+                if(!follower.isBusy()){
+                    VisionIntake();
+                    follower.followPath(Put2SpecPath);
+                    follower.update();
+                    setPathState(9);
+                    break;
+                }
+            case 8:
+                if(!follower.isBusy()) {
+                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    VisionIntake();
+                    follower.followPath(GetSpec,true);
+                    follower.update();
+                    buildNextPath();
+                    Thread.sleep(ConstantMap.SleepMSAfterScoring);
+                    //Algorithm.ArmController("Down");
+                    setPathState(9);
+                    break;
+                }
+            case 9:
+                if(!follower.isBusy()){
+                    //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    follower.followPath(Scoring,true);
+                    follower.update();
+                    //Algorithm.ArmController("Up");
+                    Specnum++;
+                    if(Specnum<7) {
+                        setPathState(8);
+                        break;
+                    }
+                    setPathState(10);
+                    break;
+                }
+            case 10:
                 if(!follower.isBusy()) {
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     follower.followPath(park,false);
@@ -233,9 +267,6 @@ public class SpecAutoBY27570 extends OpMode{
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
 
-        // Initialize array
-        GetSpec = new PathChain[4];
-        Scoring = new PathChain[3];
         buildPaths();
     }
 
@@ -254,6 +285,25 @@ public class SpecAutoBY27570 extends OpMode{
     /** We do not use this because everything should automatically disable **/
     @Override
     public void stop() {
+        if(visionAPI != null)
+            visionAPI.close();
+    }
+    public void VisionIntake() throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
+            if(graspTarget.isInRange){
+                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                Algorithm.ForwardGrabController("Open");
+                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.SlideController("Back");
+            }
+            if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
+                nextPointDistance = 0;
+            }else {
+                nextPointDistance = 0.393700787 * result.nextTargetHorizontalOffsetCm;
+            }
+        }
     }
 }
 

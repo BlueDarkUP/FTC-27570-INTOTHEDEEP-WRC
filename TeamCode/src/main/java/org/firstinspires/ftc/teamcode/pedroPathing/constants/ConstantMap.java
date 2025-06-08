@@ -7,6 +7,8 @@ import org.firstinspires.ftc.teamcode.API.PositionCalculator;
  * @version 2025/5
  */
 public class ConstantMap {
+    public static final double ScorePoseX = 39;
+    public static final double ScorePoseY_LeftTop = 76.5;
     public static final int SleepMSAfterScoring = 600;
     //Back grab position
     public static final double BackGrab_Initialize = 0;
