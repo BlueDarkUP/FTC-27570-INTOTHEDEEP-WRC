@@ -13,6 +13,7 @@ public class ConstantMap {
     public static final double AutoIntakePoseY = 48;
     public static final double AutoIntakeControlPoseY = 20;
     public static final double IntakeToGetControlPoseY = 30;
+    public static final double CM_TO_INCH = 0.393700787;
     public static final int SleepMSAfterScoring = 600;
     //Back grab position
     public static final double BackGrab_Initialize = 0;

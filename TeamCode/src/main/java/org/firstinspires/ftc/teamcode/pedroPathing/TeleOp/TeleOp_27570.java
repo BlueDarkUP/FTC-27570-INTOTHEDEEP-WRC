@@ -1,9 +1,15 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.TeleOp;
 
+import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
+import com.pedropathing.pathgen.BezierCurve;
+import com.pedropathing.pathgen.BezierLine;
+import com.pedropathing.pathgen.Path;
+import com.pedropathing.pathgen.PathChain;
+import com.pedropathing.pathgen.Point;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -35,14 +41,27 @@ public class TeleOp_27570 extends OpMode {
     private boolean EmergencyFlag = false;
     private boolean VLflag = false;
 
+    private static double nextPointDistance = 0;
+    private static Pose PoseNow = null;
+    private PathChain ToIntake;
     private boolean Eflag1 = false,Eflag2 = false;
 
     private ElapsedTime Emergencytimer1 = new ElapsedTime(),Emergencytimer2 = new ElapsedTime();
+
+    private Timer opmodeTimer;
     private final Pose startPose = new Pose(0,0,0);
 
     /** This method is call once when init is played, it initializes the follower **/
+    private void PathBuilder(){
+        ToIntake = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(PoseNow),new Point(PoseNow.getX()+nextPointDistance,PoseNow.getY())))
+                .setConstantHeadingInterpolation(PoseNow.getHeading())
+                .build();
+    }
     @Override
     public void init() {
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         Algorithm = new AlgorithmLibrary(hardwareMap);
@@ -82,6 +101,7 @@ public class TeleOp_27570 extends OpMode {
         follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
         follower.update();
 
+        PoseNow = follower.getPose();
         BackGrabController();
         RotateController();
         SlideController();
@@ -113,9 +133,28 @@ public class TeleOp_27570 extends OpMode {
     private void VisionController() throws InterruptedException {
         VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
-
             GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
-            if(gamepad1.right_stick_button&&graspTarget.isInRange&&!VLflag){
+            if(gamepad1.right_stick_button&&!VLflag) {
+                if(!graspTarget.isInRange) {
+                    nextPointDistance = result.nextTargetHorizontalOffsetCm * ConstantMap.CM_TO_INCH;
+                    PathBuilder();
+                    follower.followPath(ToIntake);
+                    follower.update();
+                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.ForwardGrabController("Open");
+                    while (follower.isBusy()) {
+                    }
+                }
+                VisionIntake();
+            }
+            VLflag = gamepad1.right_stick_button;
+        }
+    }
+    private void VisionIntake() throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
+            if(graspTarget.isInRange){
                 Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                 Algorithm.ForwardGrabController("Open");
                 BackGrabFlag = false;
@@ -123,7 +162,6 @@ public class TeleOp_27570 extends OpMode {
                 Algorithm.SlideController("Back");
                 IntakeSlideFlag = false;
             }
-            VLflag = gamepad1.right_stick_button;
         }
     }
     private void CameraArmController(){

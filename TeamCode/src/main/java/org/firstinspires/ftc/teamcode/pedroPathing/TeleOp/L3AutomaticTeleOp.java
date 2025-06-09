@@ -186,14 +186,14 @@ public class L3AutomaticTeleOp extends OpMode {
     public void autonomousPathUpdate() throws InterruptedException {
         switch (pathState) {
             case 0:
-                follower.followPath(scorePreload);
+                follower.followPath(scorePreload,true);
                 follower.update();
                 setPathState(1);
                 break;
             case 1:
                 if(!follower.isBusy()) {
                     VisionIntake();
-                    follower.followPath(Putting3);
+                    follower.followPath(Putting3,true);
                     follower.update();
                     setPathState(2);
                     break;
@@ -203,12 +203,12 @@ public class L3AutomaticTeleOp extends OpMode {
                     Algorithm.ForwardGrabController("Open");
                     if(!VisionIsFound){
                         AbandonNum=2;
-                        follower.followPath(Put3ToIntake);
+                        follower.followPath(Put3ToIntake,true);
                         follower.update();
                         setPathState(7);
                         break;
                     }
-                    follower.followPath(Pickup2);
+                    follower.followPath(Pickup2,true);
                     follower.update();
                     setPathState(3);
                     break;
@@ -216,7 +216,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 3:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(Putting2);
+                    follower.followPath(Putting2,true);
                     follower.update();
                     setPathState(4);
                     break;
@@ -224,7 +224,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 4:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController("Open");
-                    follower.followPath(Pickup1);
+                    follower.followPath(Pickup1,true);
                     follower.update();
                     setPathState(5);
                     break;
@@ -232,7 +232,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 5:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(Putting1);
+                    follower.followPath(Putting1,true);
                     follower.update();
                     setPathState(6);
                     break;
@@ -240,7 +240,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 6:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController("Open");
-                    follower.followPath(Intake1);
+                    follower.followPath(Intake1,true);
                     follower.update();
                     setPathState(7);
                     break;
@@ -248,7 +248,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 7:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(PutFrom1);
+                    follower.followPath(PutFrom1,true);
                     follower.update();
                     buildNextIntakePath();
                     counter1++;
@@ -261,7 +261,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }
             case 8:
                 if(!follower.isBusy()){
-                    follower.followPath(Intake1);
+                    follower.followPath(Intake1,true);
                     follower.update();
                     counter1++;
                     setPathState(9);
@@ -270,7 +270,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 9:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(GetSpecFromIntake);
+                    follower.followPath(GetSpecFromIntake,true);
                     follower.update();
                     setPathState(11);
                     break;
@@ -285,7 +285,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 11:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController("Open");
-                    follower.followPath(Scoring);
+                    follower.followPath(Scoring,true);
                     follower.update();
                     scoreCounter++;
                     if((scoreCounter)<(counter1+3-AbandonNum+2/*容错*/)){
@@ -298,7 +298,7 @@ public class L3AutomaticTeleOp extends OpMode {
             case 12:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(GetSpec);
+                    follower.followPath(GetSpec,true);
                     follower.update();
                     buildNextScorePath();
                     setPathState(11);
@@ -306,7 +306,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }
             case 13:
                 if(!follower.isBusy()){
-                    follower.followPath(park);
+                    follower.followPath(park,false);
                     follower.update();
                     setPathState(-1);
                     break;
@@ -386,7 +386,7 @@ public class L3AutomaticTeleOp extends OpMode {
             if(result.graspableTargetsInZone>1){
                 nextPointDistance = 0;
             }else {
-                nextPointDistance = 0.393700787 * result.nextTargetHorizontalOffsetCm;
+                nextPointDistance = ConstantMap.CM_TO_INCH * result.nextTargetHorizontalOffsetCm;
                 VisionIsFound = true;
                 if(result.nextTargetHorizontalOffsetCm==0){
                     VisionIsFound = false;

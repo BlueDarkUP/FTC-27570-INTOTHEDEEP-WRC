@@ -309,7 +309,7 @@ public class SpecAutoBY27570 extends OpMode{
             if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
                 nextPointDistance = 0;
             }else {
-                nextPointDistance = 0.393700787 * result.nextTargetHorizontalOffsetCm;
+                nextPointDistance = ConstantMap.CM_TO_INCH * result.nextTargetHorizontalOffsetCm;
             }
         }
     }
