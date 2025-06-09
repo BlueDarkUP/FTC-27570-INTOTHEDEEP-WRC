@@ -14,16 +14,22 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
+import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
+import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
+import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
 
 /**
  * This is a Autonomous code BUT should be operate during TELEOP TIME!!!!!
- * Lever 3 auto drive
+ * Level 3 auto pilot
+ *
  * 遥遥领先——Richard Yu
  *
  * @author Luca Li
- * @version UNKNOWN
+ * @version 2025/6/9
  *
  * To my lover -jsy
  */
@@ -33,6 +39,9 @@ public class L3AutomaticTeleOp extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
+    public static VisionGraspingAPI visionAPI;
+    private static double ScorePoseNowY = ConstantMap.ScorePoseY_LeftTop;
+    private static double IntakePoseNowX = ConstantMap.AutoIntakeX_LeftTop;
     private AlgorithmLibrary Algorithm;
 
     /** This is the variable where we store the state of our auto.
@@ -49,97 +58,132 @@ public class L3AutomaticTeleOp extends OpMode {
      * Lets assume the Robot is facing the human player and we want to score in the bucket */
     private final Pose startPose = new Pose(10, 7.7, Math.toRadians(0));
     private final Pose Get2= new Pose(27,13,Math.toRadians(0));
-    private final Pose Put2 = new Pose(10,13,Math.toRadians(0));
-    //Control point between GP1 and RP1
-    private final Pose GP3 = new Pose(45,13,Math.toRadians(0));
-    private final Pose RP3 = new Pose(40,7.8,Math.toRadians(0));
-    private final Pose RP3Control1 = new Pose(69.8,12);
-    private final Pose RP3Control2 = new Pose(61.3,7.8);
-    private final Pose Push3 = new Pose(10,7.8,Math.toRadians(0));
+    private final Pose Put2 = new Pose(10,23,Math.toRadians(0));
+    private final Pose Get3 = new Pose(30,7.8,Math.toRadians(0));
+    private final Pose Put3 = new Pose(10,13,Math.toRadians(0));
     private final Pose Get1 = new Pose(27,23,Math.toRadians(0));
     //Control point between RP1 and RP2
     private final Pose PutPosition = new Pose(10,23,Math.toRadians(0));
-    private final Pose FirstIntakePosition = new Pose(85,48,Math.toRadians(90));
-    private final Pose FirstIntakeControlPosition = new Pose(80,34);
-    private final Pose SecondIntakePosition = new Pose(70,48,Math.toRadians(90));
-    private final Pose SecondIntakeControlPosition = new Pose(70,33);
+    private final Pose IntakePosition = new Pose(ConstantMap.AutoIntakeX_LeftTop,ConstantMap.AutoIntakePoseY,Math.toRadians(90));
+    private final Pose IntakeControlPosition = new Pose(ConstantMap.AutoIntakeX_LeftTop,ConstantMap.AutoIntakeControlPoseY);
     private final Pose ClimbPose = new Pose(60,96,Math.toRadians(-90));
     private final Pose ToClimbControlPose = new Pose(11,99);
     private final Pose ToClimbControlPose2 = new Pose(57,141);
 
-    private final Pose ScorePosition = new Pose(39,70,Math.toRadians(0));
-    private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
+    private final Pose ScorePose = new Pose(39,70,Math.toRadians(0));
+    private final Pose GetSpecPose = new Pose(8.955,31,Math.toRadians(0));
     private Path scorePreload, park;
-    private PathChain  Pickup1, Pushing3, Putting1,Putting2, Scoring, GetSpec,Intake1,Intake2,PutFrom1,PutFrom2,GetSpecFrom2;
-    private int counter1 = 0,counter2 = 0,scoreCounter = 0;
+
+    private static double nextPointDistance = 0;
+    private static boolean VisionIsFound = false;
+    private PathChain  Pickup2,Pickup1, Putting3, Putting1,Putting2, Scoring, GetSpec,Intake1,PutFrom1,GetSpecFromIntake,Put3ToIntake;
+    private int counter1 = 0,AbandonNum = 0,scoreCounter = 0;
 
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts. **/
     public void buildPaths() {
-        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(Get2)));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), Get2.getHeading());
+        scorePreload = new Path(new BezierLine(new Point(startPose), new Point(Get3)));
+        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), Get3.getHeading());
+
+        Putting3 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(Get3),new Point(Put3)))
+                .setLinearHeadingInterpolation(Get3.getHeading(),Put3.getHeading())
+                .build();
+        Pickup2 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(Put3),new Point(Get2)))
+                .setLinearHeadingInterpolation(Put3.getHeading(),Get2.getHeading())
+                .build();
 
         Putting2 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(Get2),new Point(Put2)))
                 .setLinearHeadingInterpolation(Get2.getHeading(),Put2.getHeading())
                 .build();
 
-        Pushing3 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(Put2),new Point(GP3)))
-                .setLinearHeadingInterpolation(Get2.getHeading(),Put2.getHeading())
-                .addPath(new BezierCurve(new Point(GP3),new Point(RP3Control1),new Point(RP3Control2),new Point(RP3)))
-                .setLinearHeadingInterpolation(GP3.getHeading(),RP3.getHeading())
-                .addPath(new BezierLine(new Point(RP3),new Point(Push3)))
-                .setLinearHeadingInterpolation(RP3.getHeading(),Push3.getHeading())
-                .build();
-
         Pickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(Push3),new Point(Get1)))
-                .setLinearHeadingInterpolation(Push3.getHeading(),Get1.getHeading())
+                .addPath(new BezierLine(new Point(Put2),new Point(Get1)))
+                .setLinearHeadingInterpolation(Put2.getHeading(),Get1.getHeading())
                 .build();
 
         Putting1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(Get1),new Point(PutPosition)))
                 .setLinearHeadingInterpolation(Get1.getHeading(),PutPosition.getHeading())
                 .build();
+        Put3ToIntake = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(Put3),new Point(IntakeControlPosition),new Point(IntakePosition)))
+                .setLinearHeadingInterpolation(Put3.getHeading(),IntakePosition.getHeading())
+                .build();
         Intake1 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(PutPosition),new Point(FirstIntakeControlPosition),new Point(FirstIntakePosition)))
-                .setLinearHeadingInterpolation(PutPosition.getHeading(),FirstIntakePosition.getHeading())
+                .addPath(new BezierCurve(new Point(PutPosition),new Point(IntakeControlPosition),new Point(IntakePosition)))
+                .setLinearHeadingInterpolation(PutPosition.getHeading(),IntakePosition.getHeading())
                 .build();
 
         PutFrom1 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(FirstIntakePosition),new Point(FirstIntakeControlPosition),new Point(PutPosition)))
-                .setLinearHeadingInterpolation(FirstIntakePosition.getHeading(),PutPosition.getHeading())
+                .addPath(new BezierCurve(new Point(IntakePosition),new Point(IntakeControlPosition),new Point(PutPosition)))
+                .setLinearHeadingInterpolation(IntakePosition.getHeading(),PutPosition.getHeading())
                 .build();
-        Intake2 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(PutPosition),new Point(SecondIntakeControlPosition),new Point(SecondIntakePosition)))
-                .setLinearHeadingInterpolation(PutPosition.getHeading(),SecondIntakePosition.getHeading())
-                .build();
-
-        PutFrom2 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(SecondIntakePosition),new Point(SecondIntakeControlPosition),new Point(PutPosition)))
-                .setLinearHeadingInterpolation(SecondIntakePosition.getHeading(),PutPosition.getHeading())
-                .build();
-        GetSpecFrom2 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(SecondIntakeControlPosition),new Point(SecondIntakeControlPosition),new Point(GetSpecPosition)))
-                .setLinearHeadingInterpolation(SecondIntakePosition.getHeading(),GetSpecPosition.getHeading())
+        GetSpecFromIntake = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(IntakePosition),new Point(IntakeControlPosition),new Point(GetSpecPose)))
+                .setLinearHeadingInterpolation(IntakePosition.getHeading(),GetSpecPose.getHeading())
                 .build();
         Scoring = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(ScorePosition)))
-                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),ScorePosition.getHeading())
+                .addPath(new BezierLine(new Point(GetSpecPose),new Point(ScorePose)))
+                .setLinearHeadingInterpolation(GetSpecPose.getHeading(),ScorePose.getHeading())
                 .build();
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(ScorePosition),new Point(GetSpecPosition)))
-                .setLinearHeadingInterpolation(ScorePosition.getHeading(),GetSpecPosition.getHeading())
+                .addPath(new BezierLine(new Point(ScorePose),new Point(GetSpecPose)))
+                .setLinearHeadingInterpolation(ScorePose.getHeading(),GetSpecPose.getHeading())
                 .build();
-        park = new Path(new BezierCurve(new Point(ScorePosition),  new Point(ToClimbControlPose), new Point(ToClimbControlPose2),new Point(ClimbPose)));
-        park.setLinearHeadingInterpolation(ScorePosition.getHeading(), ClimbPose.getHeading());
+        park = new Path(new BezierCurve(new Point(ScorePose),  new Point(ToClimbControlPose), new Point(ToClimbControlPose2),new Point(ClimbPose)));
+        park.setLinearHeadingInterpolation(ScorePose.getHeading(), ClimbPose.getHeading());
     }
+    public void buildNextScorePath(){
+        if(nextPointDistance<0){
+            nextPointDistance = 0;
+        }
+        ScorePoseNowY = ScorePoseNowY-nextPointDistance;
+        //Limit the minimum position in case the robot hit he frame
+        if(ScorePoseNowY<66){
+            ScorePoseNowY = 66;
+        }
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(GetSpecPose)))
+                .setLinearHeadingInterpolation(ScorePose.getHeading(),GetSpecPose.getHeading())
+                .build();
 
+        Scoring= follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPose),new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY))))
+                .setLinearHeadingInterpolation(GetSpecPose.getHeading(),ScorePose.getHeading())
+                .build();
+        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),  new Point(ToClimbControlPose), new Point(ToClimbControlPose2),new Point(ClimbPose)));
+        park.setLinearHeadingInterpolation(ScorePose.getHeading(), ClimbPose.getHeading());
+    }
+    public void buildNextIntakePath(){
+        if(nextPointDistance<0){
+            nextPointDistance = 0;
+        }
+        IntakePoseNowX = IntakePoseNowX+nextPointDistance;
+        //Limit the maximum position in case the robot hit he frame
+        if(IntakePoseNowX>86){
+            IntakePoseNowX = 86;
+        }
+        Intake1 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(PutPosition),new Point(new Pose(IntakePoseNowX,ConstantMap.AutoIntakeControlPoseY)),new Point(new Pose(IntakePoseNowX,ConstantMap.AutoIntakePoseY))))
+                .setLinearHeadingInterpolation(PutPosition.getHeading(),IntakePosition.getHeading())
+                .build();
+
+        PutFrom1 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(new Pose(IntakePoseNowX,ConstantMap.AutoIntakePoseY)),new Point(new Pose(IntakePoseNowX,ConstantMap.AutoIntakeControlPoseY)),new Point(PutPosition)))
+                .setLinearHeadingInterpolation(IntakePosition.getHeading(),PutPosition.getHeading())
+                .build();
+        GetSpecFromIntake = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(new Pose(IntakePoseNowX,ConstantMap.AutoIntakePoseY)),new Point(GetSpecPose)))
+                .setLinearHeadingInterpolation(IntakePosition.getHeading(),GetSpecPose.getHeading())
+                .build();
+    }
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
      * Everytime the switch changes case, it will reset the timer. (This is because of the setPathState() method)
      * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
-    public void autonomousPathUpdate() {
+    public void autonomousPathUpdate() throws InterruptedException {
         switch (pathState) {
             case 0:
                 follower.followPath(scorePreload);
@@ -148,97 +192,119 @@ public class L3AutomaticTeleOp extends OpMode {
                 break;
             case 1:
                 if(!follower.isBusy()) {
-                    follower.followPath(Putting2);
+                    VisionIntake();
+                    follower.followPath(Putting3);
                     follower.update();
                     setPathState(2);
                     break;
                 }
             case 2:
                 if(!follower.isBusy()){
-                    follower.followPath(Pushing3);
+                    Algorithm.ForwardGrabController("Open");
+                    if(!VisionIsFound){
+                        AbandonNum=2;
+                        follower.followPath(Put3ToIntake);
+                        follower.update();
+                        setPathState(7);
+                        break;
+                    }
+                    follower.followPath(Pickup2);
                     follower.update();
                     setPathState(3);
                     break;
                 }
             case 3:
                 if(!follower.isBusy()){
-                    follower.followPath(Pickup1);
+                    VisionIntake();
+                    follower.followPath(Putting2);
                     follower.update();
                     setPathState(4);
                     break;
                 }
             case 4:
                 if(!follower.isBusy()){
-                    follower.followPath(Putting1);
+                    Algorithm.ForwardGrabController("Open");
+                    follower.followPath(Pickup1);
                     follower.update();
                     setPathState(5);
                     break;
                 }
             case 5:
                 if(!follower.isBusy()){
-                    follower.followPath(Intake1);
+                    VisionIntake();
+                    follower.followPath(Putting1);
                     follower.update();
                     setPathState(6);
                     break;
                 }
             case 6:
                 if(!follower.isBusy()){
-                    follower.followPath(PutFrom1);
+                    Algorithm.ForwardGrabController("Open");
+                    follower.followPath(Intake1);
                     follower.update();
-                    counter1++;
-                    if(counter1<5){
-                        setPathState(5);
-                        break;
-                    }
                     setPathState(7);
                     break;
                 }
             case 7:
                 if(!follower.isBusy()){
-                    follower.followPath(Intake2);
+                    VisionIntake();
+                    follower.followPath(PutFrom1);
                     follower.update();
-                    counter2++;
-                    if(counter2<5){
-                        setPathState(8);
+                    buildNextIntakePath();
+                    counter1++;
+                    if(counter1<9){
+                        setPathState(6);
                         break;
                     }
-                    setPathState(9);
+                    setPathState(8);
                     break;
                 }
             case 8:
                 if(!follower.isBusy()){
-                    follower.followPath(PutFrom2);
+                    follower.followPath(Intake1);
                     follower.update();
-                    setPathState(7);
+                    counter1++;
+                    setPathState(9);
                     break;
                 }
             case 9:
                 if(!follower.isBusy()){
-                    follower.followPath(GetSpecFrom2);
+                    VisionIntake();
+                    follower.followPath(GetSpecFromIntake);
                     follower.update();
-                    setPathState(10);
+                    setPathState(11);
                     break;
-                }
+                }/*
             case 10:
                 if(!follower.isBusy()){
                     follower.followPath(Scoring);
                     follower.update();
-                    scoreCounter++;
-                    if((scoreCounter)<11){
-                        setPathState(11);
-                        break;
-                    }
                     setPathState(12);
                     break;
-                }
+                }*/
             case 11:
                 if(!follower.isBusy()){
-                    follower.followPath(GetSpec);
+                    Algorithm.ForwardGrabController("Open");
+                    follower.followPath(Scoring);
                     follower.update();
-                    setPathState(10);
+                    scoreCounter++;
+                    if((scoreCounter)<(counter1+3-AbandonNum+2/*容错*/)){
+                        setPathState(12);
+                        break;
+                    }
+                    setPathState(13);
                     break;
                 }
             case 12:
+                if(!follower.isBusy()){
+                    VisionIntake();
+                    follower.followPath(GetSpec);
+                    follower.update();
+                    buildNextScorePath();
+                    setPathState(11);
+                    break;
+                }
+            case 13:
                 if(!follower.isBusy()){
                     follower.followPath(park);
                     follower.update();
@@ -262,7 +328,11 @@ public class L3AutomaticTeleOp extends OpMode {
 
         // These loop the movements of the robot
         follower.update();
-        autonomousPathUpdate();
+        try {
+            autonomousPathUpdate();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         // Feedback to Driver Hub
         telemetry.addData("path state", pathState);
@@ -300,5 +370,30 @@ public class L3AutomaticTeleOp extends OpMode {
     /** We do not use this because everything should automatically disable **/
     @Override
     public void stop() {
+        if(visionAPI != null)
+            visionAPI.close();
+    }
+    public void VisionIntake() throws InterruptedException {
+        VisionTargetResult result = visionAPI.getLatestResult();
+        if (result.isTargetFound) {
+            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
+            if(graspTarget.isInRange){
+                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                Algorithm.ForwardGrabController("Open");
+                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.SlideController("Back");
+            }
+            if(result.graspableTargetsInZone>1){
+                nextPointDistance = 0;
+            }else {
+                nextPointDistance = 0.393700787 * result.nextTargetHorizontalOffsetCm;
+                VisionIsFound = true;
+                if(result.nextTargetHorizontalOffsetCm==0){
+                    VisionIsFound = false;
+                }
+            }
+        }/*else {
+            nextPointDistance = 25;
+        }*/
     }
 }

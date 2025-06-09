@@ -9,6 +9,10 @@ import org.firstinspires.ftc.teamcode.API.PositionCalculator;
 public class ConstantMap {
     public static final double ScorePoseX = 39;
     public static final double ScorePoseY_LeftTop = 76.5;
+    public static final double AutoIntakeX_LeftTop = 65;
+    public static final double AutoIntakePoseY = 48;
+    public static final double AutoIntakeControlPoseY = 20;
+    public static final double IntakeToGetControlPoseY = 30;
     public static final int SleepMSAfterScoring = 600;
     //Back grab position
     public static final double BackGrab_Initialize = 0;

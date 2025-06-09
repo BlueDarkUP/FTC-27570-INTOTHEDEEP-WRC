@@ -34,6 +34,7 @@ public class SpecAutoBY27570 extends OpMode{
     private AlgorithmLibrary Algorithm;
     public static VisionGraspingAPI visionAPI;
     private Timer pathTimer, actionTimer, opmodeTimer;
+    private static double ScorePoseNowY = ConstantMap.ScorePoseY_LeftTop;
 
     /** This is the variable where we store the state of our auto.
      * It is used by the pathUpdate method. */
@@ -97,16 +98,21 @@ public class SpecAutoBY27570 extends OpMode{
         park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
     public void buildNextPath(){
+        ScorePoseNowY = ScorePoseNowY-nextPointDistance;
+        //Limit the minimum position in case the robot hit he frame
+        if(ScorePoseNowY<66){
+            ScorePoseNowY = 66;
+        }
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(GetSpecPosition)))
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
                 .build();
 
         Scoring= follower.pathBuilder()
-                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance))))
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY))))
                 .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
                 .build();
-        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(parkPose)));
+        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(parkPose)));
         park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
@@ -150,7 +156,7 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 3:
                 if(!follower.isBusy()){
-                    follower.followPath(Put3rdSpecPath);
+                    follower.followPath(Put3rdSpecPath,true);
                     follower.update();
                     buildNextPath();
                     //Algorithm.SlideController("Back");
@@ -160,7 +166,8 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 4:
                 if(!follower.isBusy()){
-                    follower.followPath(Get1SpecPath);
+                    Algorithm.ForwardGrabController("Open");
+                    follower.followPath(Get1SpecPath,true);
                     follower.update();
                     setPathState(5);
                     break;
@@ -168,7 +175,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 5:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(Put1SpecPath);
+                    follower.followPath(Put1SpecPath,true);
                     follower.update();
                     setPathState(6);
                     break;
@@ -176,7 +183,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 6:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController("Open");
-                    follower.followPath(Get2SpecPath);
+                    follower.followPath(Get2SpecPath,true);
                     follower.update();
                     setPathState(7);
                     break;
@@ -184,7 +191,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 7:
                 if(!follower.isBusy()){
                     VisionIntake();
-                    follower.followPath(Put2SpecPath);
+                    follower.followPath(Put2SpecPath,true);
                     follower.update();
                     setPathState(9);
                     break;
@@ -204,6 +211,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 9:
                 if(!follower.isBusy()){
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    Algorithm.ForwardGrabController("Open");
                     follower.followPath(Scoring,true);
                     follower.update();
                     //Algorithm.ArmController("Up");

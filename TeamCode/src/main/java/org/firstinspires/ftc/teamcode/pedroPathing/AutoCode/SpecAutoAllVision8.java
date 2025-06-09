@@ -32,6 +32,7 @@ public class SpecAutoAllVision8 extends OpMode{
     private Follower follower;
     private AlgorithmLibrary Algorithm;
     public static VisionGraspingAPI visionAPI;
+    private static double ScorePoseNowY = ConstantMap.ScorePoseY_LeftTop;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     /** This is the variable where we store the state of our auto.
@@ -71,16 +72,21 @@ public class SpecAutoAllVision8 extends OpMode{
         park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
     public void buildNextPath(){
+        ScorePoseNowY = ScorePoseNowY-nextPointDistance;
+        //Limit the minimum position in case the robot hit he frame
+        if(ScorePoseNowY<66){
+            ScorePoseNowY = 66;
+        }
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(GetSpecPosition)))
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
                 .build();
 
         Scoring= follower.pathBuilder()
-                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance))))
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY))))
                 .setLinearHeadingInterpolation(GetSpecPosition.getHeading(),scorePose.getHeading())
                 .build();
-        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ConstantMap.ScorePoseY_LeftTop-nextPointDistance)),new Point(parkPose)));
+        park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(parkPose)));
         park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
     /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
