@@ -72,6 +72,25 @@ The team has integrated and customized an advanced autonomous navigation system 
 - **Modular Action Library**: Encapsulates common robot actions (e.g., grabbing, arm control) into an `AlgorithmLibrary`, simplifying higher-level logic and enhancing code reusability.
 - **Pose Estimation and Navigation**: Uses `Pose` objects (comprising X, Y coordinates and heading angle) for accurate representation of robot pose and field navigation.
 
+### 辅助驾驶手动程序 (`TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedroPathing/TeleOp`)
+本团队在 `TeleOp` 目录中编写了L2和L3自动驾驶程序以供适应不同的手动赛场环境，其特性和使用说明如下：
+- **全自动L3自动驾驶**: 基于自动程序编写方法，加入侧边intake路径，针对自动预期8+Park的程序编写同时兼容7+park版本（可跳过部分路径），完成长达2分钟的手动阶段纯自动运行（包含爬升）。
+- **向心力控制**: `pedroPathing`自带的手动程序，开启向心力控制提升手动操作手感。
+- **抓取自动纠位**: 当使用视觉抓取样本时若目标不在可抓取范围内则会横向移动底盘使其进入可抓取范围（请勿在朝向不正确时运行，可能会导致过冲撞墙等未知危险！）。
+- **自动得分**: 先按下dpad右键以重新构建坐标系（注意准确性！这几乎无异于自动阶段前的摆车，朝向不正确或位置偏差过大会造成不小的影响！），再到得分点将所有挂在高杆上的标本全部推向左边，点击dpad右键即可开启自动得分，若出现任何异常立刻拨动左摇杆以接管自动驾驶，滑轨和大臂将会自动复位。
+- **紧急复位**: 由于开启程序时可能电机初始位置不一定是零位，点击触控板即可强行重置。
+Sure, here's a professional and well-formatted English translation of your README content:
+
+## TeleOperated with Driver Assistance (`TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedroPathing/TeleOp`)
+
+Our team has developed L2 and L3 driver assistance programs within the `TeleOp` directory to adapt to various manual field environments. Their features and usage instructions are as follows:
+
+* **Full Autonomous L3 Driving**: This program is based on our autonomous routine development, incorporating a side intake path. It's designed for an expected 8+Park autonomous phase but also supports a 7+Park version (allowing certain paths to be skipped). It enables fully autonomous operation during the 2-minute teleoperated period, including climbing.
+* **Centripetal Force Control**: The built-in teleoperated program within `pedroPathing` features centripetal force control, enhancing the feel of manual operation.
+* **Automatic Gripper Alignment**: When using vision to pick up samples, if the target is not within the gripper's reach, the chassis will automatically strafe horizontally to bring it into range. **(Caution: Do not run this feature if the robot's orientation is incorrect, as it may lead to overshoots, wall collisions, or other unforeseen hazards!)**
+* **Automatic Scoring**: First, press the **D-pad Right** button to re-establish the coordinate system. **(Note: Accuracy is crucial! This is almost identical to the robot's starting position before the autonomous phase. Incorrect orientation or significant position deviation can have a considerable impact!)** Then, at the scoring location, push all game elements hanging on the high pole to the left side. Click **D-pad Right** again to initiate automatic scoring. Should any anomaly occur, immediately move the **left joystick** to take over control from the autonomous system; the linear slide and main arm will automatically reset.
+* **Emergency Reset**: As motor initial positions may not always be at zero when starting the program, tap the **touchpad** to force a reset.
+
 ### 智能视觉抓取系统 (`TeamCode/src/main/java/org/firstinspires/ftc/teamcode/vision`)
 本团队在 `vision` 目录中开发了一套智能视觉抓取系统，其核心功能和架构如下（详细说明请参考该目录下的 `readme.md`）：
 - **目标识别与定位**: 利用OpenCV进行图像处理，能够精确识别视野中的目标（例如，特定颜色的立方体或比赛元素），并计算其在三维空间中的相对位置和姿态。
