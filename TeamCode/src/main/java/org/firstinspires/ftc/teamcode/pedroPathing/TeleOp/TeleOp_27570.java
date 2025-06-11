@@ -161,6 +161,7 @@ public class TeleOp_27570 extends OpMode {
                     follower.followPath(ToIntake);
                     follower.update();
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    BackGrabFlag=false;
                     Algorithm.ForwardGrabController("Open");
                     while (follower.isBusy()) {
                         if(!Algorithm.AutoPilotBreak(gamepad1)){
@@ -281,6 +282,7 @@ public class TeleOp_27570 extends OpMode {
                     if (scOrGeFLag) {
                         Algorithm.ForwardGrabController("Open");
                         Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                        BackGrabFlag=true;
                         Thread.sleep(150);
                         follower.followPath(Scoring);
                         follower.update();
@@ -288,6 +290,7 @@ public class TeleOp_27570 extends OpMode {
                         continue;
                     }
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    BackGrabFlag=false;
                     VisionIntake();
                     follower.followPath(GetSpec);
                     follower.update();
@@ -296,6 +299,8 @@ public class TeleOp_27570 extends OpMode {
                 }
             }
             RebuildMapIsReady = false;
+            Algorithm.SlideController("Back");
+            Algorithm.ArmController("Down");
         }
 
         buildAutoScoring2LastFlag = gamepad1.dpad_left;
