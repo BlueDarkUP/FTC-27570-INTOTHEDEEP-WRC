@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.constants;
 
 
+import com.pedropathing.follower.Follower;
+import com.pedropathing.localization.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -214,12 +217,21 @@ public class AlgorithmLibrary {
         LiftAction(ConstantMap.Lift_Up_Climb_Position);
         while(true){
             if(!Left_Hanging_Motor.isBusy()&&!Right_Hanging_Motor.isBusy()){
+                Left_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                Right_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 Left_Hanging_Motor.setPower(-1);
                 Right_Hanging_Motor.setPower(-1);
             }
         }
     }
+    public boolean AutoPilotBreak(Gamepad gamepad){
+        return gamepad.left_stick_x==0&& gamepad.left_stick_y==0;
 
+    }
+    public void followerReset(Follower follower, Pose SetPose){
+        follower.breakFollowing();
+        follower.setPose(SetPose);
+    }
     private void LiftAction(int Position){
         //Set target position
         Left_Hanging_Motor.setTargetPosition(Position);

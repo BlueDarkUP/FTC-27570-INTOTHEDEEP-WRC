@@ -5,9 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.pathgen.BezierCurve;
 import com.pedropathing.pathgen.BezierLine;
-import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -26,36 +24,56 @@ import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
  * This is the fucking best teleop code in the world.
  * @author Luca Li
  * @version 2025/5
- *
+ *(L2 autopilot connected!
  */
 
 @TeleOp (name = "TeleOp-Code-27570",group = "Competition")
 
 public class TeleOp_27570 extends OpMode {
-    private Follower follower;
+    private static Follower follower;
     private AlgorithmLibrary Algorithm;
     private VisionGraspingAPI visionAPI;
     private boolean BackGrabFlag=false,BackGrabLastFlag=false,IntakeRotateFlag=false,IntakeRotateLastFlag=false;
     private boolean ClawFlag=false,ClawLastFlag=false,IntakeSlideFlag = false,IntakeSlideLastFlag = false;
     private boolean ArmFlag = false,ArmLastFlag = false,CameraArmFlag = false,CameraArmLastFlag = false;
+    private boolean buildAutoScoring1LastFlag = false;
+    private boolean buildAutoScoring2LastFlag = false;
+    private boolean RebuildMapIsReady = false;
     private boolean EmergencyFlag = false;
     private boolean VLflag = false;
 
     private static double nextPointDistance = 0;
     private static Pose PoseNow = null;
-    private PathChain ToIntake;
+
+    private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
+    private static Pose ScoringInitialPosition = new Pose();
+    private PathChain ToIntake,Scoring,GetSpec;
     private boolean Eflag1 = false,Eflag2 = false;
 
     private ElapsedTime Emergencytimer1 = new ElapsedTime(),Emergencytimer2 = new ElapsedTime();
 
     private Timer opmodeTimer;
-    private final Pose startPose = new Pose(0,0,0);
+    private final Pose startPose = new Pose(10,7.8,0);
 
     /** This method is call once when init is played, it initializes the follower **/
-    private void PathBuilder(){
+    private void PathBuilderIntake(){
         ToIntake = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(PoseNow),new Point(PoseNow.getX()+nextPointDistance,PoseNow.getY())))
                 .setConstantHeadingInterpolation(PoseNow.getHeading())
+                .build();
+    }
+    private void PathBuilderScoring(){
+        double ScoreNowY = ScoringInitialPosition.getY()-nextPointDistance;
+        if(ScoreNowY<64){
+            ScoreNowY=64;
+        }
+        Scoring = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(GetSpecPosition),new Point(new Pose(ConstantMap.ScorePoseX,ScoreNowY))))
+                .setConstantHeadingInterpolation(GetSpecPosition.getHeading())
+                .build();
+        GetSpec = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ScoreNowY)),new Point(GetSpecPosition)))
+                .setConstantHeadingInterpolation(GetSpecPosition.getHeading())
                 .build();
     }
     @Override
@@ -116,8 +134,10 @@ public class TeleOp_27570 extends OpMode {
             throw new RuntimeException(e);
         }
         /* Telemetry Outputs of our Follower */
-        telemetry.addData("X", follower.getPose().getX());
-        telemetry.addData("Y", follower.getPose().getY());
+        telemetry.addLine("请在使用自动驾驶时专注于场上情况随时接管哦,,Ծ‸Ծ,,");
+        telemetry.addLine("自动模式运行时不要触碰左摇杆！          つ♡⊂");
+        telemetry.addData("X:", follower.getPose().getX());
+        telemetry.addData("Y:", follower.getPose().getY());
         telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
 
         /* Update Telemetry to the Driver Hub */
@@ -137,12 +157,16 @@ public class TeleOp_27570 extends OpMode {
             if(gamepad1.right_stick_button&&!VLflag) {
                 if(!graspTarget.isInRange) {
                     nextPointDistance = result.nextTargetHorizontalOffsetCm * ConstantMap.CM_TO_INCH;
-                    PathBuilder();
+                    PathBuilderIntake();
                     follower.followPath(ToIntake);
                     follower.update();
                     Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
                     Algorithm.ForwardGrabController("Open");
                     while (follower.isBusy()) {
+                        if(!Algorithm.AutoPilotBreak(gamepad1)){
+                            Algorithm.followerReset(follower,follower.getPose());
+                            break;
+                        }
                     }
                 }
                 VisionIntake();
@@ -241,9 +265,45 @@ public class TeleOp_27570 extends OpMode {
         }
         ArmLastFlag = gamepad1.left_bumper;
     }
+    private void AutoScoringController() throws InterruptedException {
+        if(gamepad1.dpad_right&&!buildAutoScoring1LastFlag){
+            Algorithm.followerReset(follower,GetSpecPosition);
+            RebuildMapIsReady = true;
+        }
+        if(gamepad1.dpad_left&&!buildAutoScoring2LastFlag&&RebuildMapIsReady){
+            ScoringInitialPosition = follower.getPose();
+            //the flag below is for auto pilot knowing go scoring or get specimen.
+            boolean scOrGeFLag = false;
+            nextPointDistance=0;
+            PathBuilderScoring();
+            while(Algorithm.AutoPilotBreak(gamepad1)){
+                if(!follower.isBusy()) {
+                    if (scOrGeFLag) {
+                        Algorithm.ForwardGrabController("Open");
+                        Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                        Thread.sleep(150);
+                        follower.followPath(Scoring);
+                        follower.update();
+                        scOrGeFLag = false;
+                        continue;
+                    }
+                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    VisionIntake();
+                    follower.followPath(GetSpec);
+                    follower.update();
+                    scOrGeFLag = true;
+                    PathBuilderScoring();
+                }
+            }
+            RebuildMapIsReady = false;
+        }
+
+        buildAutoScoring2LastFlag = gamepad1.dpad_left;
+        buildAutoScoring1LastFlag = gamepad1.dpad_right;
+    }
     private void ClimbController(){
         if (gamepad1.ps){
-            ClimbController();
+            Algorithm.ClimbController();
         }
     }
     private void EmergencyInitMotors(){
