@@ -30,7 +30,6 @@ public class AlgorithmLibrary {
     public static boolean ClawFlag=false,IntakeSlideFlag = false;
     public static boolean ArmFlag = false,CameraArmFlag = false;
     public static boolean SpinnerFlag = false;
-    public static boolean RebuildMapIsReady = false;
     public boolean EmergencyFlag = false;
     public static boolean VLflag = false;
     private int MotorLastPosition;
