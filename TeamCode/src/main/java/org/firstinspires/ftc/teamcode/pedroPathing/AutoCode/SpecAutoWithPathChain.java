@@ -8,13 +8,11 @@ import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
-import com.pedropathing.util.Constants;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
-import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 
@@ -132,7 +130,7 @@ public class SpecAutoWithPathChain extends OpMode{
             case 0:
                 follower.followPath(scorePreload,true);
                 follower.update();
-                Algorithm.ArmController("Up");
+                Algorithm.ArmController();
                 // Thread.sleep(200);
 
                 //Algorithm.BackGrabAction(ConstantMap.BackGrab_LaxPosition);
@@ -147,11 +145,11 @@ public class SpecAutoWithPathChain extends OpMode{
                 }*/
             case 2:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     follower.followPath(Push3Together, true);
                     follower.update();
                     Thread.sleep(1300);
-                    Algorithm.ArmController("Down");
+                    Algorithm.ArmController();
                     setPathState(6);
                     break;
                 }/*
@@ -180,12 +178,12 @@ public class SpecAutoWithPathChain extends OpMode{
             case 6:
                 if(!follower.isBusy()) {
                     Thread.sleep(200);
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    Algorithm.BackGrabAction();
                     Thread.sleep(100);
                     follower.followPath(Scoring,true);
                     follower.update();
                     Thread.sleep(150);
-                    Algorithm.ArmController("Up");
+                    Algorithm.ArmController();
                     Specnum += 1;
                     if (Specnum < 5) {
                         setPathState(7);
@@ -196,21 +194,21 @@ public class SpecAutoWithPathChain extends OpMode{
                 }
             case 7:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     follower.followPath(Getspec, true);
                     follower.update();
                     Thread.sleep(1000);
-                    Algorithm.ArmController("Down");
+                    Algorithm.ArmController();
                     setPathState(6);
                     break;
                 }
             case 8:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     follower.followPath(park,false);
                     follower.update();
                     Thread.sleep(700);
-                    Algorithm.ArmController("Down");
+                    Algorithm.ArmController();
                     setPathState(-1);
                     break;
                 }

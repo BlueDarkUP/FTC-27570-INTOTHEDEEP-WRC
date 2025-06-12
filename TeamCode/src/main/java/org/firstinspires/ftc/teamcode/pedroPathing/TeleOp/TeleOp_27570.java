@@ -33,9 +33,9 @@ public class TeleOp_27570 extends OpMode {
     private static Follower follower;
     private AlgorithmLibrary Algorithm;
     private VisionGraspingAPI visionAPI;
-    private boolean BackGrabFlag=false,BackGrabLastFlag=false,IntakeRotateFlag=false,IntakeRotateLastFlag=false;
-    private boolean ClawFlag=false,ClawLastFlag=false,IntakeSlideFlag = false,IntakeSlideLastFlag = false;
-    private boolean ArmFlag = false,ArmLastFlag = false,CameraArmFlag = false,CameraArmLastFlag = false;
+    private boolean BackGrabLastFlag=false,IntakeRotateLastFlag=false;
+    private boolean ClawLastFlag=false,IntakeSlideLastFlag = false;
+    private boolean ArmLastFlag = false,CameraArmLastFlag = false;
     private boolean buildAutoScoring1LastFlag = false;
     private boolean buildAutoScoring2LastFlag = false;
     private boolean RebuildMapIsReady = false;
@@ -129,6 +129,7 @@ public class TeleOp_27570 extends OpMode {
         ClimbController();
         try {
             VisionController();
+            AutoScoringController();
             ForwardClawController();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -160,9 +161,8 @@ public class TeleOp_27570 extends OpMode {
                     PathBuilderIntake();
                     follower.followPath(ToIntake);
                     follower.update();
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                    BackGrabFlag=false;
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.BackGrabAction();
+                    Algorithm.ForwardGrabController();
                     while (follower.isBusy()) {
                         if(!Algorithm.AutoPilotBreak(gamepad1)){
                             Algorithm.followerReset(follower,follower.getPose());
@@ -180,89 +180,48 @@ public class TeleOp_27570 extends OpMode {
         if (result.isTargetFound) {
             GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
             if(graspTarget.isInRange){
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                Algorithm.ForwardGrabController("Open");
-                BackGrabFlag = false;
+                Algorithm.BackGrabAction();
+                Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
-                Algorithm.SlideController("Back");
-                IntakeSlideFlag = false;
+                Algorithm.SlideController();
             }
         }
     }
     private void CameraArmController(){
         if(gamepad1.dpad_down&&!CameraArmLastFlag){
-            if(CameraArmFlag){
-                Algorithm.CameraArmController(ConstantMap.Camera_Arm_PutDown_Position);
-                CameraArmFlag = false;
-            }
-            else {
-                CameraArmFlag = true;
-                Algorithm.BackGrabAction(ConstantMap.Camera_Arm_Initialize_Position);
-            }
+            Algorithm.CameraArmController();
         }
 
         CameraArmLastFlag = gamepad1.dpad_down;
     }
     private void BackGrabController(){
         if(gamepad1.square&&!BackGrabLastFlag){
-            if(BackGrabFlag){
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                BackGrabFlag = false;
-            }
-            else {
-                BackGrabFlag = true;
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-            }
+            Algorithm.BackGrabAction();
         }
 
         BackGrabLastFlag = gamepad1.square;
     }
     private void ForwardClawController() throws InterruptedException {
         if(gamepad1.cross&!ClawLastFlag){
-            if(ClawFlag){
-                Algorithm.IntakeController("Put down");
-                ClawFlag = false;
-            }else {
-                Algorithm.IntakeController("Take");
-                IntakeSlideFlag=true;
-                ClawFlag = true;
-            }
+            Algorithm.IntakeController();
         }
         ClawLastFlag = gamepad1.cross;
     }
     private void SlideController(){
         if(gamepad1.right_bumper&!IntakeSlideLastFlag){
-            if(IntakeSlideFlag){
-                Algorithm.SlideController("Back");
-                IntakeSlideFlag = false;
-            }else {
-                Algorithm.SlideController("Out");
-                IntakeSlideFlag = true;
-            }
+            Algorithm.SlideController();
         }
         IntakeSlideLastFlag = gamepad1.right_bumper;
     }
     private void RotateController(){
         if(gamepad1.triangle&!IntakeRotateLastFlag){
-            if(IntakeRotateFlag){
-                Algorithm.RotateController("Back");
-                IntakeRotateFlag = false;
-            }else {
-                Algorithm.RotateController("Turn");
-                IntakeRotateFlag = true;
-            }
+            Algorithm.RotateController();
         }
         IntakeRotateLastFlag = gamepad1.triangle;
     }
     private void ArmUpController(){
         if(gamepad1.left_bumper&!ArmLastFlag){
-            if(ArmFlag){
-                Algorithm.ArmController("Down");
-                ArmFlag = false;
-            }else {
-                Algorithm.ArmController("Up");
-                ArmFlag = true;
-            }
+            Algorithm.ArmController();
         }
         ArmLastFlag = gamepad1.left_bumper;
     }
@@ -280,17 +239,15 @@ public class TeleOp_27570 extends OpMode {
             while(Algorithm.AutoPilotBreak(gamepad1)){
                 if(!follower.isBusy()) {
                     if (scOrGeFLag) {
-                        Algorithm.ForwardGrabController("Open");
-                        Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-                        BackGrabFlag=true;
+                        Algorithm.ForwardGrabController();
+                        Algorithm.BackGrabAction();
                         Thread.sleep(150);
                         follower.followPath(Scoring);
                         follower.update();
                         scOrGeFLag = false;
                         continue;
                     }
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                    BackGrabFlag=false;
+                    Algorithm.BackGrabAction();
                     VisionIntake();
                     follower.followPath(GetSpec);
                     follower.update();
@@ -299,8 +256,8 @@ public class TeleOp_27570 extends OpMode {
                 }
             }
             RebuildMapIsReady = false;
-            Algorithm.SlideController("Back");
-            Algorithm.ArmController("Down");
+            Algorithm.SlideController();
+            Algorithm.ArmController();
         }
 
         buildAutoScoring2LastFlag = gamepad1.dpad_left;

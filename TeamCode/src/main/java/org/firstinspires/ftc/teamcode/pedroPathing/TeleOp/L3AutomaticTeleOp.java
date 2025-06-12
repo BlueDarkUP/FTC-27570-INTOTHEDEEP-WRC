@@ -7,7 +7,6 @@ import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
-import com.pedropathing.util.Constants;
 import com.pedropathing.util.Timer;
 
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -200,7 +199,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }
             case 2:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     if(!VisionIsFound){
                         AbandonNum=2;
                         follower.followPath(Put3ToIntake,true);
@@ -223,7 +222,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }
             case 4:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Pickup1,true);
                     follower.update();
                     setPathState(5);
@@ -239,7 +238,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }
             case 6:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Intake1,true);
                     follower.update();
                     setPathState(7);
@@ -284,7 +283,7 @@ public class L3AutomaticTeleOp extends OpMode {
                 }*/
             case 11:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Scoring,true);
                     follower.update();
                     scoreCounter++;
@@ -378,10 +377,10 @@ public class L3AutomaticTeleOp extends OpMode {
         if (result.isTargetFound) {
             GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
             if(graspTarget.isInRange){
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                Algorithm.ForwardGrabController("Open");
+                Algorithm.BackGrabAction();
+                Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
-                Algorithm.SlideController("Back");
+                Algorithm.SlideController();
             }
             if(result.graspableTargetsInZone>1){
                 nextPointDistance = 0;

@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.constants;
 
 
+import androidx.annotation.NonNull;
+
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,8 +12,6 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import java.util.Objects;
 
 /**
  * 优雅永不过时
@@ -25,6 +25,14 @@ public class AlgorithmLibrary {
     public static DcMotorEx Right_Hanging_Motor = null;
     public static DcMotorEx BigArm = null;
     public static Servo BackArm,back_grab,forward_claw,intake_rotate,camera_arm,arm_forward,forward_slide,intake_spinner;
+
+    public static boolean BackGrabFlag=false,IntakeRotateFlag=false;
+    public static boolean ClawFlag=false,IntakeSlideFlag = false;
+    public static boolean ArmFlag = false,CameraArmFlag = false;
+    public static boolean SpinnerFlag = false;
+    public static boolean RebuildMapIsReady = false;
+    public boolean EmergencyFlag = false;
+    public static boolean VLflag = false;
     private int MotorLastPosition;
 
 
@@ -65,7 +73,7 @@ public class AlgorithmLibrary {
         BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BigArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        ArmFlag=false;
     }
     public void Initialize_All_For_Autonomous(){
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -131,7 +139,9 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
         Thread.sleep(450);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
-        Thread.sleep(160);/*
+        Thread.sleep(160);
+        ClawFlag = true;
+        /*
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         intake_rotate.setPosition(0.62); // Or a constant
@@ -139,72 +149,91 @@ public class AlgorithmLibrary {
         camera_arm.setPosition(0.113); // Or a constant*/
     }
 
-    public void ArmController(String flag){
-        if(Objects.equals(flag,"Up")){
-            LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
-            BigArmMotorAction(ConstantMap.Big_Arm_Set_Position);
-            BackArmAction(ConstantMap.BACK_ARM_SET_POSITION);
+    public void ArmController(){
+        if(ArmFlag){
+            BigArmMotorAction(ConstantMap.Big_Arm_Reset_Position);
+            BackArm.setPosition(ConstantMap.BACK_ARM_RESET_POSITION);
+            LiftAction(ConstantMap.Lift_Down_Position);
+            ArmFlag=false;
             return;
         }
-        BigArmMotorAction(ConstantMap.Big_Arm_Reset_Position);
-        BackArmAction(ConstantMap.BACK_ARM_RESET_POSITION);
-        LiftAction(ConstantMap.Lift_Down_Position);
+        LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
+        BigArmMotorAction(ConstantMap.Big_Arm_Set_Position);
+        BackArm.setPosition(ConstantMap.BACK_ARM_SET_POSITION);
+        ArmFlag=true;
     }
-    public void CameraArmController(double position){
-        camera_arm.setPosition(position);
+    public void CameraArmController(){
+        if(CameraArmFlag) {
+            camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
+            CameraArmFlag=false;
+        }
+        camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
+        CameraArmFlag=true;
     }
-    public void IntakeController(String flag) throws InterruptedException {
-        if(Objects.equals(flag,"Take")) {
+    public void IntakeController() throws InterruptedException {
+        if(ClawFlag) {
             arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
             Thread.sleep(60);
-            ForwardGrabController("Close");
-            Thread.sleep(120);
+            ForwardGrabController();
+            Thread.sleep(110);
             arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
             return;
         }
-        ForwardGrabController("Open");
+        ForwardGrabController();
     }
-    public void SpinnerController(String flag){
-        if(Objects.equals(flag,"Put down")){
-            intake_spinner.setPosition(ConstantMap.Intake_spinner_PutDown_Position);
+    public void SpinnerController(){
+        if(SpinnerFlag){
+            intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
             return;
         }
-        intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        intake_spinner.setPosition(ConstantMap.Intake_spinner_PutDown_Position);
     }
-    public void ForwardGrabController(String flag){
-        if(Objects.equals(flag, "Open")){
+    public void ForwardGrabController(){
+        if(ClawFlag){
             forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
+            ClawFlag=false;
             return;
         }
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
+        ClawFlag=true;
     }
-    public void RotateController(String flag){
-        if(Objects.equals(flag,"Turn")) {
-            intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
+    public void RotateController(){
+        if(IntakeRotateFlag) {
+            intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
+            IntakeSlideFlag=false;
             return;
         }
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
+        IntakeRotateFlag=true;
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
     }
-    public void BackGrabAction(double Position){
-        back_grab.setPosition(Position);
-    }
-    public void SlideController(String flag){
-        if(Objects.equals(flag,"Out")){
-            intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
-            arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
-            forward_slide.setPosition(ConstantMap.Slide_Out_Position);
+    public void BackGrabAction(){
+        if(BackGrabFlag) {
+            back_grab.setPosition(ConstantMap.BackGrab_Initialize);
+            BackGrabFlag=false;
             return;
         }
-        arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
-        forward_slide.setPosition(ConstantMap.Slide_In_Position);
-        intake_spinner.setPosition(ConstantMap.Intake_spinner_PutDown_Position);
+        back_grab.setPosition(ConstantMap.BackGrab_TightPosition);
+        BackGrabFlag=true;
+    }
+    public void SlideController(){
+        if(IntakeSlideFlag){
+            arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+            forward_slide.setPosition(ConstantMap.Slide_In_Position);
+            SpinnerController();
+            IntakeSlideFlag=false;
+            return;
+        }
+        SpinnerController();
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
+        forward_slide.setPosition(ConstantMap.Slide_Out_Position);
+        IntakeSlideFlag=true;
     }
     public void EmergencyMotorPowerSetting(){
         BigArm.setPower(-0.5);
         Left_Hanging_Motor.setPower(-0.7);
         Right_Hanging_Motor.setPower(-0.7);
     }
-    public boolean IsTop(DcMotorEx Motor){
+    public boolean IsTop(@NonNull DcMotorEx Motor){
         if(Motor.getCurrentPosition()<MotorLastPosition+1||Motor.getCurrentPosition()>MotorLastPosition-1){
             MotorLastPosition = Motor.getCurrentPosition();
             return true;
@@ -244,9 +273,6 @@ public class AlgorithmLibrary {
         //Set Power
         Left_Hanging_Motor.setPower(1);
         Right_Hanging_Motor.setPower(1);
-    }
-    private void BackArmAction(double Position){
-        BackArm.setPosition(Position);
     }
     private void BigArmMotorAction(int Position){
         //Set Target Position

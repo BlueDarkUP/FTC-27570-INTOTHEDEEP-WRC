@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
@@ -60,12 +59,12 @@ public class ServoTuning extends OpMode {
         follower.update();
         if(gamepad1.a&&!LastFlag){
             if(Flag){
-                algorithm.BackGrabAction(0);
+                algorithm.BackGrabAction();
                 Flag=false;
             }
             else {
                 Flag=true;
-                algorithm.BackGrabAction(0.47);
+                algorithm.BackGrabAction();
             }
         }
         LastFlag = gamepad1.a;

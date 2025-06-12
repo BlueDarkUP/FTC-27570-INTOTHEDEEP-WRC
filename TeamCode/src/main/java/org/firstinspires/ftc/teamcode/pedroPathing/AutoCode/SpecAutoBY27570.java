@@ -8,7 +8,6 @@ import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
-import com.pedropathing.util.Constants;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -128,7 +127,7 @@ public class SpecAutoBY27570 extends OpMode{
                 break;
             case 1:
                 if(!follower.isBusy()){
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     VisionIntake();
                     Specnum++;
                     if(Specnum>=3) {
@@ -146,7 +145,7 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 2:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
                     follower.followPath(Scoring,true);
                     follower.update();
@@ -166,7 +165,7 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 4:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Get1SpecPath,true);
                     follower.update();
                     setPathState(5);
@@ -182,7 +181,7 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 6:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Get2SpecPath,true);
                     follower.update();
                     setPathState(7);
@@ -198,7 +197,7 @@ public class SpecAutoBY27570 extends OpMode{
                 }
             case 8:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     VisionIntake();
                     follower.followPath(GetSpec,true);
                     follower.update();
@@ -211,7 +210,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 9:
                 if(!follower.isBusy()){
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
-                    Algorithm.ForwardGrabController("Open");
+                    Algorithm.ForwardGrabController();
                     follower.followPath(Scoring,true);
                     follower.update();
                     //Algorithm.ArmController("Up");
@@ -301,10 +300,10 @@ public class SpecAutoBY27570 extends OpMode{
         if (result.isTargetFound) {
             GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
             if(graspTarget.isInRange){
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                Algorithm.ForwardGrabController("Open");
+                Algorithm.BackGrabAction();
+                Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
-                Algorithm.SlideController("Back");
+                Algorithm.SlideController();
             }
             if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
                 nextPointDistance = 0;

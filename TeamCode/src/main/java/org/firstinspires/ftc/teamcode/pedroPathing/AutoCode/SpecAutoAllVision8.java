@@ -110,7 +110,7 @@ public class SpecAutoAllVision8 extends OpMode{
                 }*/
             case 2:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     VisionIntake();
                     follower.followPath(GetSpec,true);
                     follower.update();
@@ -122,8 +122,8 @@ public class SpecAutoAllVision8 extends OpMode{
                 }
             case 3:
                 if(!follower.isBusy()){
-                    Algorithm.ForwardGrabController("Open");
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
+                    Algorithm.ForwardGrabController();
+                    Algorithm.BackGrabAction();
                     follower.followPath(Scoring,true);
                     follower.update();
                     //Algorithm.ArmController("Up");
@@ -137,11 +137,11 @@ public class SpecAutoAllVision8 extends OpMode{
                 }
             case 4:
                 if(!follower.isBusy()) {
-                    Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
+                    Algorithm.BackGrabAction();
                     follower.followPath(park,false);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController("Down");
+                    Algorithm.ArmController();
                     setPathState(-1);
                     break;
                 }
@@ -213,10 +213,10 @@ public class SpecAutoAllVision8 extends OpMode{
         if (result.isTargetFound) {
             GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
             if(graspTarget.isInRange){
-                Algorithm.BackGrabAction(ConstantMap.BackGrab_Initialize);
-                Algorithm.ForwardGrabController("Open");
+                Algorithm.BackGrabAction();
+                Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
-                Algorithm.SlideController("Back");
+                Algorithm.SlideController();
             }
             if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
                 nextPointDistance = 0;
