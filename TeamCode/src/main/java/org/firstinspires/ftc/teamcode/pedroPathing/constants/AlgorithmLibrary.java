@@ -54,7 +54,7 @@ public class AlgorithmLibrary {
         BigArm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm_forward.setDirection(Servo.Direction.REVERSE);
         forward_slide.setDirection(Servo.Direction.REVERSE);
-
+        intake_spinner.setDirection(Servo.Direction.REVERSE);
 
     }
     public void InitializeLift(){
