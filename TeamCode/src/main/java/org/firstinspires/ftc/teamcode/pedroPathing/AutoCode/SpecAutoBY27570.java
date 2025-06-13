@@ -16,10 +16,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
-import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
-import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
-import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
-import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
+import org.firstinspires.ftc.teamcode.vision.GraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
 
 /**
  * This is the fucking best autonomous code in the world.
@@ -295,21 +293,27 @@ public class SpecAutoBY27570 extends OpMode{
         if(visionAPI != null)
             visionAPI.close();
     }
-    public void VisionIntake() throws InterruptedException {
-        VisionTargetResult result = visionAPI.getLatestResult();
+    private void VisionIntake() throws InterruptedException {
+        VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
-            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result,telemetry);
-            if(graspTarget.isInRange){
+            GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
+            if(grasp.isWithinRange){
+                Algorithm.ClawFlag = true;
+                Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();
                 Algorithm.ForwardGrabController();
-                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.performVisionGrasp(grasp.sliderServoPos, grasp.turnServoPos, grasp.rotateServoPos);
+                Algorithm.IntakeSlideFlag=true;
                 Algorithm.SlideController();
             }
-            if(result.graspableTargetsInZone>1||result.nextTargetHorizontalOffsetCm<0){
-                nextPointDistance = 0;
-            }else {
-                nextPointDistance = ConstantMap.CM_TO_INCH * result.nextTargetHorizontalOffsetCm;
+        }
+        if(!result.nextMoveDirection.equals("None")) {
+            GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
+            if(move.moveCm>0){
+                nextPointDistance=0;
+                return;
             }
+            nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
         }
     }
 }

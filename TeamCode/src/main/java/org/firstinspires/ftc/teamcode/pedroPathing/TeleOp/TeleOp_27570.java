@@ -154,7 +154,7 @@ public class TeleOp_27570 extends OpMode {
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if(gamepad1.right_stick_button&&!VLflag) {
-                if(!result.nextMoveDirection.equals("None")) {
+                if(!result.nextMoveDirection.equals("None")&&!grasp.isWithinRange) {
                     GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
                     nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
                     PathBuilderIntake();
