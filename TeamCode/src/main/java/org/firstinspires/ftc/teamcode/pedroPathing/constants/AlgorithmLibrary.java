@@ -98,10 +98,6 @@ public class AlgorithmLibrary {
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Right_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Left_Hanging_Motor.setPower(-0.7);
-        Right_Hanging_Motor.setPower(-0.7);
-        BigArm.setPower(-0.4);
-        Thread.sleep(100);
         Left_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Right_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
