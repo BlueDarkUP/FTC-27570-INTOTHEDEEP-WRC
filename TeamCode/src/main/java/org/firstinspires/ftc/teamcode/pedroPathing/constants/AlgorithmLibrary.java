@@ -34,7 +34,6 @@ public class AlgorithmLibrary {
     public static boolean VLflag = false;
     private int MotorLastPosition;
 
-
     public AlgorithmLibrary(HardwareMap hardwareMap){
         //Get hardware
         Left_Hanging_Motor = hardwareMap.get(DcMotorEx.class, "LeftHangingMotor");
@@ -72,7 +71,7 @@ public class AlgorithmLibrary {
         BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BigArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ArmFlag=false;
+
     }
     public void Initialize_All_For_Autonomous(){
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -91,19 +90,18 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
-        camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
     public void Initialize_All_For_TeleOp() throws InterruptedException {
         //Initialize motor
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         Right_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BigArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        /*Left_Hanging_Motor.setPower(-0.7);
+        Left_Hanging_Motor.setPower(-0.7);
         Right_Hanging_Motor.setPower(-0.7);
         BigArm.setPower(-0.4);
-        Thread.sleep(100);*/
+        Thread.sleep(100);
         Left_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Right_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         BigArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -119,17 +117,17 @@ public class AlgorithmLibrary {
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
         intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
-        camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
     }
 
     public void Initialize_All_For_Vision() throws InterruptedException {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
+
     public void AutoPilotInitializeHardware(){
         BackGrabFlag=true;
         ClawFlag=true;
@@ -151,6 +149,7 @@ public class AlgorithmLibrary {
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
         Thread.sleep(160);
         ClawFlag = true;
+        IntakeSlideFlag=true;
         /*
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
