@@ -15,10 +15,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
-import org.firstinspires.ftc.teamcode.vision.Data.GraspingTarget;
-import org.firstinspires.ftc.teamcode.vision.Interface.VisionGraspingAPI;
-import org.firstinspires.ftc.teamcode.vision.CoreCalcu.VisionGraspingCalculator;
-import org.firstinspires.ftc.teamcode.vision.Data.VisionTargetResult;
+import org.firstinspires.ftc.teamcode.vision.GraspingCalculator;
+import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
 
 /**
  * This is the fucking best teleop code in the world.
@@ -152,15 +150,18 @@ public class TeleOp_27570 extends OpMode {
             visionAPI.close();
     }
     private void VisionController() throws InterruptedException {
-        VisionTargetResult result = visionAPI.getLatestResult();
+        VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
-            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
+            GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if(gamepad1.right_stick_button&&!VLflag) {
-                if(!graspTarget.isInRange) {
-                    nextPointDistance = result.nextTargetHorizontalOffsetCm * ConstantMap.CM_TO_INCH;
+                if(!result.nextMoveDirection.equals("None")) {
+                    GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
+                    nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
                     PathBuilderIntake();
                     follower.followPath(ToIntake);
                     follower.update();
+                    Algorithm.ClawFlag = true;
+                    Algorithm.BackGrabFlag = true;
                     Algorithm.BackGrabAction();
                     Algorithm.ForwardGrabController();
                     while (follower.isBusy()) {
@@ -176,13 +177,16 @@ public class TeleOp_27570 extends OpMode {
         }
     }
     private void VisionIntake() throws InterruptedException {
-        VisionTargetResult result = visionAPI.getLatestResult();
+        VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
-            GraspingTarget graspTarget = VisionGraspingCalculator.calculate(result, telemetry);
-            if(graspTarget.isInRange){
+            GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
+            if(grasp.isWithinRange){
+                Algorithm.ClawFlag = true;
+                Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();
                 Algorithm.ForwardGrabController();
-                Algorithm.performVisionGrasp(graspTarget.sliderServoPosition, graspTarget.turnServoPosition, graspTarget.rotateServoPosition);
+                Algorithm.performVisionGrasp(grasp.sliderServoPos, grasp.turnServoPos, grasp.rotateServoPos);
+                Algorithm.IntakeSlideFlag=true;
                 Algorithm.SlideController();
             }
         }
@@ -236,6 +240,7 @@ public class TeleOp_27570 extends OpMode {
             boolean scOrGeFLag = false;
             nextPointDistance=0;
             PathBuilderScoring();
+            Algorithm.AutoPilotInitializeHardware();
             while(Algorithm.AutoPilotBreak(gamepad1)){
                 if(!follower.isBusy()) {
                     if (scOrGeFLag) {
@@ -245,6 +250,8 @@ public class TeleOp_27570 extends OpMode {
                         follower.followPath(Scoring);
                         follower.update();
                         scOrGeFLag = false;
+                        Thread.sleep(500);
+                        Algorithm.SpinnerToCenter();
                         continue;
                     }
                     Algorithm.BackGrabAction();

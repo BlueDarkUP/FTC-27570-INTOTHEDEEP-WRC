@@ -26,10 +26,10 @@ public class AlgorithmLibrary {
     public static DcMotorEx BigArm = null;
     public static Servo BackArm,back_grab,forward_claw,intake_rotate,camera_arm,arm_forward,forward_slide,intake_spinner;
 
-    public static boolean BackGrabFlag=false,IntakeRotateFlag=false;
-    public static boolean ClawFlag=false,IntakeSlideFlag = false;
-    public static boolean ArmFlag = false,CameraArmFlag = false;
-    public static boolean SpinnerFlag = false;
+    public  boolean BackGrabFlag=false,IntakeRotateFlag=false;
+    public  boolean ClawFlag=false,IntakeSlideFlag = false;
+    public  boolean ArmFlag = false,CameraArmFlag = false;
+    public  boolean SpinnerFlag = false;
     public boolean EmergencyFlag = false;
     public static boolean VLflag = false;
     private int MotorLastPosition;
@@ -130,13 +130,24 @@ public class AlgorithmLibrary {
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
+    public void AutoPilotInitializeHardware(){
+        BackGrabFlag=true;
+        ClawFlag=true;
+        IntakeSlideFlag=true;
+        SlideController();
+        ForwardGrabController();
+        BackGrabAction();
+    }
+    public void SpinnerToCenter(){
+        intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+    }
     public void performVisionGrasp(double sliderServoPosition, double turnServoPosition, double rotateServoPosition) throws InterruptedException {
         forward_slide.setPosition(sliderServoPosition);
         intake_spinner.setPosition(turnServoPosition);
         intake_rotate.setPosition(rotateServoPosition);
-        Thread.sleep(100);
+        Thread.sleep(50);
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
-        Thread.sleep(450);
+        Thread.sleep(350);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
         Thread.sleep(160);
         ClawFlag = true;
