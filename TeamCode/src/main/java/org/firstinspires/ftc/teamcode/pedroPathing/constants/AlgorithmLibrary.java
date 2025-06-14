@@ -110,7 +110,7 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
     }
