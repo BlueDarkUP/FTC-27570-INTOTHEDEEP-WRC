@@ -9,7 +9,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 /**
- /**
  * 视觉抓取API (Vision Grasping API) - 主接口/门面 (Facade)
  * 这是提供给外部程序（如TeleOp）使用的唯一公共入口点。它封装了所有内部实现细节，
  * 包括相机管理和复杂的图像处理管道，为上层应用提供一个简洁、稳定的接口。
@@ -24,6 +23,12 @@ import org.openftc.easyopencv.OpenCvWebcam;
  */
 public class VisionGraspingAPI {
 
+    // --- 公共枚举，用于选择颜色 ---
+    public enum AllianceColor {
+        RED,
+        BLUE
+    }
+
     // --- 可配置常量 (外部可能需要引用，保留在此处) ---
     public static final String WEBCAM_NAME_STR = "Webcam";
     public static final int CAMERA_WIDTH = 1280;
@@ -37,12 +42,17 @@ public class VisionGraspingAPI {
     private VisionPipeline pipeline;
     private volatile VisionTargetResult latestResult = new VisionTargetResult();
 
-    public void init(HardwareMap hardwareMap) {
+    /**
+     * 初始化视觉API
+     * @param hardwareMap 硬件映射
+     * @param targetColor 要识别的联盟颜色 (RED 或 BLUE)
+     */
+    public void init(HardwareMap hardwareMap, AllianceColor targetColor) {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, WEBCAM_NAME_STR), cameraMonitorViewId);
 
-        // 使用新的、独立的VisionPipeline类
-        pipeline = new VisionPipeline(this);
+        // 将选择的颜色传递给Pipeline
+        pipeline = new VisionPipeline(this, targetColor);
 
         webcam.setPipeline(pipeline);
         webcam.setMillisecondsPermissionTimeout(2000);

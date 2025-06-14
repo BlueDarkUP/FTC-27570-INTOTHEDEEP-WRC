@@ -20,7 +20,6 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 核心视觉处理管道
@@ -35,11 +34,11 @@ import java.util.Map;
  * @version 2025/6 (Refactored)
  * To My Lover - Zyy
  */
-
 public class VisionPipeline extends OpenCvPipeline {
 
     private final VisionGraspingAPI apiInstance;
     private final DetectionProcessor detectionProcessor;
+    private final String targetColorName; // 要识别的颜色名称 ("RED" 或 "BLUE")
 
     private Mat bgr, hsv, processedFrameForDetection, masterMask, maskCombined, colorMask, medianBlurred, opened;
     private Mat kernel3x3;
@@ -49,9 +48,12 @@ public class VisionPipeline extends OpenCvPipeline {
     private Integer targetZoneCenterXAtOriginalScale, targetRectY1AtOriginalScale, targetRectY2AtOriginalScale;
     private boolean viewportPaused;
 
-    public VisionPipeline(VisionGraspingAPI apiInstance) {
+    public VisionPipeline(VisionGraspingAPI apiInstance, VisionGraspingAPI.AllianceColor targetColor) {
         this.apiInstance = apiInstance;
         this.detectionProcessor = new DetectionProcessor();
+
+        // 将枚举转换为用于Map查找的字符串
+        this.targetColorName = (targetColor == VisionGraspingAPI.AllianceColor.RED) ? "RED" : "BLUE";
 
         Mat dummyFrame = new Mat(VisionGraspingAPI.CAMERA_HEIGHT, VisionGraspingAPI.CAMERA_WIDTH, CvType.CV_8UC3);
         TargetZoneInfo info = DrawingUtils.drawTargetZoneCm(dummyFrame, VisionConstants.PIXELS_PER_CM_FOR_DRAWING, VisionGraspingAPI.CAMERA_WIDTH, VisionGraspingAPI.CAMERA_HEIGHT, VisionConstants.TARGET_RECT_WIDTH_CM, VisionConstants.TARGET_RECT_HEIGHT_CM, VisionConstants.TARGET_RECT_OFFSET_X_CM, VisionConstants.TARGET_RECT_OFFSET_Y_CM, VisionConstants.TARGET_RECT_COLOR, VisionConstants.TARGET_RECT_THICKNESS, VisionConstants.ARC_SAMPLING_POINTS);
@@ -121,17 +123,25 @@ public class VisionPipeline extends OpenCvPipeline {
         double scaledMinArea = VisionConstants.MIN_SIZE_PIXELS * (processingScale * processingScale);
         double scaledMaxArea = VisionConstants.MAX_SIZE_PIXELS * (processingScale * processingScale);
 
-        for (Map.Entry<String, Scalar[][]> entry : VisionConstants.COLOR_HSV_RANGES.entrySet()) {
+        // --- 只处理选定的颜色 ---
+        Scalar[][] hsvRanges = VisionConstants.COLOR_HSV_RANGES.get(this.targetColorName);
+        if (hsvRanges != null) {
             colorMask.setTo(new Scalar(0));
-            for (Scalar[] range : entry.getValue()) {
+            // 对一个颜色的所有范围进行或运算 (例如红色有两个范围)
+            for (Scalar[] range : hsvRanges) {
                 Core.inRange(hsv, range[0], range[1], maskCombined);
                 Core.bitwise_or(colorMask, maskCombined, colorMask);
             }
+
+            // 对主掩码应用颜色掩码 (虽然只有一个颜色，但保持此结构以便未来扩展)
             Core.bitwise_or(masterMask, colorMask, masterMask);
+
+            // 形态学操作和轮廓查找
             Imgproc.medianBlur(colorMask, medianBlurred, 3);
             Imgproc.morphologyEx(medianBlurred, opened, Imgproc.MORPH_OPEN, kernel3x3, new Point(-1, -1), 2);
             List<MatOfPoint> contours = new ArrayList<>();
             Imgproc.findContours(opened, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
             for (MatOfPoint contour : contours) {
                 double area = Imgproc.contourArea(contour);
                 if (area < scaledMinArea || area > scaledMaxArea || contour.rows() < 5) { contour.release(); continue; }
@@ -145,11 +155,13 @@ public class VisionPipeline extends OpenCvPipeline {
                 if (ar < VisionConstants.TARGET_OBJECT_ASPECT_RATIO * (1-VisionConstants.ASPECT_RATIO_TOLERANCE_PERCENT) || ar > VisionConstants.TARGET_OBJECT_ASPECT_RATIO * (1+VisionConstants.ASPECT_RATIO_TOLERANCE_PERCENT)) { contour.release(); continue; }
                 Point[] boxPoints = new Point[4];
                 minAreaRect.points(boxPoints);
-                allDetectedCubes.add(new DetectedCube(entry.getKey(), (int)minAreaRect.center.x, (int)minAreaRect.center.y, boxPoints, processingScale, angle, w, h));
+                // 在创建DetectedCube时使用当前的目标颜色名称
+                allDetectedCubes.add(new DetectedCube(this.targetColorName, (int)minAreaRect.center.x, (int)minAreaRect.center.y, boxPoints, processingScale, angle, w, h));
                 contour.release();
             }
         }
 
+        // 后续处理逻辑不变
         detectionProcessor.process(apiInstance, allDetectedCubes, processingScale, targetZoneContourAtProcessedScale, targetZoneCenterXAtProcessedScale, targetRectY1AtProcessedScale, targetRectY2AtProcessedScale, VisionConstants.PIXELS_PER_CM_FOR_DRAWING, targetRectY2AtOriginalScale);
 
         if (VisionConstants.ENABLE_DEBUG_VIEW) {

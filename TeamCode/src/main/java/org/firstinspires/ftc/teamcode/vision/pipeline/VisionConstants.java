@@ -46,7 +46,15 @@ public final class VisionConstants {
     // --- 颜色检测范围 (HSV) ---
     public static final Map<String, Scalar[][]> COLOR_HSV_RANGES = new HashMap<>();
     static {
-        COLOR_HSV_RANGES.put("YELLOW", new Scalar[][]{{new Scalar(15, 80, 180), new Scalar(45, 255, 255)}});
+        // 红色有两个范围，因为H值在180度处环绕
+        COLOR_HSV_RANGES.put("RED", new Scalar[][]{
+                {new Scalar(0, 80, 130), new Scalar(10, 255, 255)},
+                {new Scalar(170, 80, 130), new Scalar(180, 255, 255)}
+        });
+        // 蓝色范围
+        COLOR_HSV_RANGES.put("BLUE", new Scalar[][]{
+                {new Scalar(100, 100, 80), new Scalar(130, 255, 255)}
+        });
     }
 
     // --- 调试视图网格 ---

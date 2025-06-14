@@ -8,7 +8,6 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import java.util.Locale;
 
 /**
- /**
  * 调用视觉API的示例手动操作程序 (TeleOp)
  * 本程序演示了如何正确地初始化、使用和关闭 VisionGraspingAPI。
  * 它从API获取最新的视觉结果，并结合 GraspingCalculator 的计算，
@@ -21,9 +20,10 @@ import java.util.Locale;
  * @version 2025/6 (Refactored)
  * To My Lover - Zyy
  */
-
 @TeleOp(name="Vision Grasping TeleOp", group="Main")
 public class VisionGraspingTeleOp extends LinearOpMode {
+    private static final VisionGraspingAPI.AllianceColor TARGET_COLOR = VisionGraspingAPI.AllianceColor.BLUE; // 可选项: .RED 或 .BLUE
+
 
     private VisionGraspingAPI visionAPI;
     private AlgorithmLibrary algorithmLibrary;
@@ -31,9 +31,12 @@ public class VisionGraspingTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry.addLine("初始化API，初始化结构");
+        telemetry.addData(">> 识别颜色", TARGET_COLOR.toString());
+        telemetry.update();
 
         visionAPI = new VisionGraspingAPI();
-        visionAPI.init(hardwareMap);
+        // 在初始化时传入选择的颜色
+        visionAPI.init(hardwareMap, TARGET_COLOR);
 
         algorithmLibrary = new AlgorithmLibrary(hardwareMap);
         algorithmLibrary.Initialize_All_For_Vision();
