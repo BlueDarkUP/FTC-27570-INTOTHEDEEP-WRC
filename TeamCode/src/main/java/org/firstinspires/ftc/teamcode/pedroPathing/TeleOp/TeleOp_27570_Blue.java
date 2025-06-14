@@ -114,7 +114,7 @@ public class TeleOp_27570_Blue extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y*Math.abs(gamepad1.left_stick_y), -gamepad1.left_stick_x*Math.abs(gamepad1.left_stick_x), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
+        follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
         follower.update();
 
         PoseNow = follower.getPose();
