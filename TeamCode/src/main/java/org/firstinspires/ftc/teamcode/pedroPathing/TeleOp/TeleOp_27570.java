@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
  *(L2 autopilot connected!
  */
 
-@TeleOp (name = "TeleOp-Code-27570",group = "Competition")
+@TeleOp (name = "TeleOp-Code-27570-BLUE",group = "A111-Competition")
 
 public class TeleOp_27570 extends OpMode {
     private static Follower follower;
@@ -82,7 +82,7 @@ public class TeleOp_27570 extends OpMode {
         follower.setStartingPose(startPose);
         Algorithm = new AlgorithmLibrary(hardwareMap);
         visionAPI = new VisionGraspingAPI();
-        visionAPI.init(hardwareMap);
+        visionAPI.init(hardwareMap, VisionGraspingAPI.AllianceColor.BLUE);
         try {
             Algorithm.Initialize_All_For_TeleOp();
         } catch (InterruptedException e) {
@@ -114,7 +114,7 @@ public class TeleOp_27570 extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
+        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y*Math.abs(gamepad1.left_stick_y), -gamepad1.left_stick_x*Math.abs(gamepad1.left_stick_x), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
         follower.update();
 
         PoseNow = follower.getPose();
@@ -172,7 +172,9 @@ public class TeleOp_27570 extends OpMode {
                         }
                     }
                 }
+                follower.holdPoint(follower.getPose());
                 VisionIntake();
+                follower.startTeleopDrive();
             }
             VLflag = gamepad1.right_stick_button;
         }

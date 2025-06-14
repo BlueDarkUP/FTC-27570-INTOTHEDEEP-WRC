@@ -136,14 +136,16 @@ public class AlgorithmLibrary {
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
+        SpinnerFlag=false;
     }
     public void performVisionGrasp(double sliderServoPosition, double turnServoPosition, double rotateServoPosition) throws InterruptedException {
         forward_slide.setPosition(sliderServoPosition);
         intake_spinner.setPosition(turnServoPosition);
+        Thread.sleep((long)(200*sliderServoPosition));
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
-        Thread.sleep(140);
+        Thread.sleep(120);
         intake_rotate.setPosition(rotateServoPosition);
-        Thread.sleep(200);
+        Thread.sleep(170);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
         Thread.sleep(160);
         ClawFlag = true;

@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
  * @version 2025/5
  */
 
-@Autonomous(name = "Auto_Spec_8+Park_27570", group = "Competition")
+@Autonomous(name = "Auto_Spec_8+Park_27570_BLUE", group = "A111-Competition")
 public class SpecAutoAllVision8 extends OpMode {
     private Follower follower;
     private AlgorithmLibrary Algorithm;
@@ -197,7 +197,7 @@ public class SpecAutoAllVision8 extends OpMode {
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
         visionAPI = new VisionGraspingAPI();
-        visionAPI.init(hardwareMap);
+        visionAPI.init(hardwareMap, VisionGraspingAPI.AllianceColor.BLUE);
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
@@ -245,7 +245,7 @@ public class SpecAutoAllVision8 extends OpMode {
             }
             if(!result.nextMoveDirection.equals("None")) {
                 GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
-                if(move.moveCm>0){
+                if(move.moveCm>0&&result.nextMoveDirection.equals("In Position")){
                     nextPointDistance=0;
                     return;
                 }
