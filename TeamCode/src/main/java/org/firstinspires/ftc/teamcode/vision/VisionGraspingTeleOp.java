@@ -8,10 +8,17 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.ConstantMap;
 import java.util.Locale;
 
 /**
- * 调用视觉API的TeleOP
- * 处理新的移动建议逻辑
+ /**
+ * 调用视觉API的示例手动操作程序 (TeleOp)
+ * 本程序演示了如何正确地初始化、使用和关闭 VisionGraspingAPI。
+ * 它从API获取最新的视觉结果，并结合 GraspingCalculator 的计算，
+ * 将复杂的数据转换成直观的遥测信息和可执行的机器人动作。
+ *
+ * 这个类是 VisionGraspingAPI 和 GraspingCalculator 的“消费者”或“客户端”。
+ * 它专注于用户交互和机器人控制逻辑，将所有复杂的视觉处理和数学计算委托给专门的API。
+ * 实现了对 "nextMoveDirection" 字段的处理，可以根据视觉建议进行精确的横向移动。
  * @author BlueDarkUP
- * @version 2025/6.5
+ * @version 2025/6 (Refactored)
  * To My Lover - Zyy
  */
 

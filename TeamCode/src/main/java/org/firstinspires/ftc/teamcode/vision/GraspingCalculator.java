@@ -7,10 +7,18 @@ import org.firstinspires.ftc.teamcode.API.ServoKinematics.ServoTarget;
 import java.util.Locale;
 
 /**
+ /**
  * 抓取计算器API
- * 封装了所有与视觉抓取相关的计算逻辑，包括距离校正、伺服角度计算和移动建议。
+ * 这是一个独立的工具类，封装了所有与“如何抓取”相关的数学计算逻辑。
+ * 它将视觉系统提供的原始数据（如距离、角度）转换为机器人可以直接使用的具体数值
+ * （如伺服舵机位置、底盘移动距离）。
+ *
+ * 此类完全解耦了视觉识别与机器人运动学，使得两部分的逻辑可以独立修改和维护。
+ * 它依赖于 VisionGraspingAPI.VisionTargetResult 的数据结构来获取输入。
+ * 所有校正因子、运动学模型和计算公式都集中在此，便于统一调整和优化抓取表现。
  * @author BlueDarkUP
- * @version 2025/6
+ * @version 2025/6 (Refactored)
+ * To My Lover - Zyy
  */
 public class GraspingCalculator {
 
