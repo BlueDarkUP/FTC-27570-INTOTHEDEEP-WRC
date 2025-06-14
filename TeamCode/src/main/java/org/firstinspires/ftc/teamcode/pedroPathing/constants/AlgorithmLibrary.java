@@ -195,9 +195,11 @@ public class AlgorithmLibrary {
     public void SpinnerController(){
         if(SpinnerFlag){
             intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+            SpinnerFlag=false;
             return;
         }
         intake_spinner.setPosition(ConstantMap.Intake_spinner_PutDown_Position);
+        SpinnerFlag=true;
     }
     public void ForwardGrabController(){
         if(ClawFlag){
