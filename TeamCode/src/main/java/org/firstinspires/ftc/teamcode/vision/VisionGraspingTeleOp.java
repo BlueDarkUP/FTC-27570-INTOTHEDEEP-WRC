@@ -61,6 +61,8 @@ public class VisionGraspingTeleOp extends LinearOpMode {
 
                 if (grasp.isWithinRange) {
                     telemetry.addData("-> Slider Servo Pos", "%.4f", grasp.sliderServoPos);
+                    telemetry.addData("TurnTableServoPos", grasp.turnServoPos);
+                    telemetry.addData("RotateServoPose", grasp.rotateServoPos);
                 } else {
                     telemetry.addData("-> Slider Servo Pos", "Out of Range");
                 }

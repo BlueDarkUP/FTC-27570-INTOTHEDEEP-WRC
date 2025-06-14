@@ -102,6 +102,7 @@ public class SpecAutoAllVision8 extends OpMode {
             case 0:
                 follower.followPath(scorePreload, true);
                 follower.update();
+                Algorithm.CameraArmController();
                 //Algorithm.ArmController("Up");
 
                 setPathState(2);
@@ -119,7 +120,6 @@ public class SpecAutoAllVision8 extends OpMode {
                     VisionIntake();
                     follower.followPath(GetSpec, true);
                     follower.update();
-                    buildNextPath();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
                     setPathState(3);
@@ -129,8 +129,10 @@ public class SpecAutoAllVision8 extends OpMode {
                 if (!follower.isBusy()) {
                     Algorithm.ForwardGrabController();
                     Algorithm.BackGrabAction();
+                    buildNextPath();
                     follower.followPath(Scoring, true);
                     follower.update();
+                    Algorithm.SpinnerToCenter();
                     //Algorithm.ArmController("Up");
                     Specnum++;
                     if (Specnum < 8) {
@@ -146,7 +148,7 @@ public class SpecAutoAllVision8 extends OpMode {
                     follower.followPath(park, false);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    Algorithm.ArmController();
+                    //Algorithm.ArmController();
                     setPathState(-1);
                     break;
                 }
@@ -237,6 +239,7 @@ public class SpecAutoAllVision8 extends OpMode {
                 Algorithm.BackGrabAction();
                 Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(grasp.sliderServoPos, grasp.turnServoPos, grasp.rotateServoPos);
+                Thread.sleep(50);
                 Algorithm.IntakeSlideFlag = true;
                 Algorithm.SlideController();
             }

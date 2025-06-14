@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.AlgorithmLibrary;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
@@ -20,7 +21,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
 @TeleOp(name = "ServoTuning", group = "Examples")
 public class ServoTuning extends OpMode {
     private Follower follower;
-    private AlgorithmLibrary algorithm;
+    Servo TuningServo;
+    AlgorithmLibrary Algorithm;
     private boolean Flag = false;
     private boolean LastFlag = false;
     private final Pose startPose = new Pose(0,0,0);
@@ -30,7 +32,8 @@ public class ServoTuning extends OpMode {
     public void init() {
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
-        algorithm = new AlgorithmLibrary(hardwareMap);
+        TuningServo = hardwareMap.get(Servo.class,"rotate_platform");
+        Algorithm = new AlgorithmLibrary(hardwareMap);
     }
 
     /** This method is called continuously after Init while waiting to be started. **/
@@ -56,7 +59,7 @@ public class ServoTuning extends OpMode {
         */
 
         follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
-        follower.update();
+        follower.update();/*
         if(gamepad1.a&&!LastFlag){
             if(Flag){
                 algorithm.BackGrabAction();
@@ -68,11 +71,10 @@ public class ServoTuning extends OpMode {
             }
         }
         LastFlag = gamepad1.a;
+        */
+            TuningServo.setPosition(gamepad1.left_trigger);
         /* Telemetry Outputs of our Follower */
-        telemetry.addData("X", follower.getPose().getX());
-        telemetry.addData("Y", follower.getPose().getY());
-        telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
-
+       telemetry.addData("Servo value",gamepad1.left_trigger);
         /* Update Telemetry to the Driver Hub */
         telemetry.update();
 

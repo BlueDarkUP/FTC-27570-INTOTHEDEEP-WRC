@@ -122,13 +122,13 @@ public class TeleOp_27570 extends OpMode {
         RotateController();
         SlideController();
         EmergencyInitMotors();
-        ArmUpController();
         CameraArmController();
         ClimbController();
         try {
             VisionController();
             AutoScoringController();
             ForwardClawController();
+            ArmUpController();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -154,6 +154,7 @@ public class TeleOp_27570 extends OpMode {
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if(gamepad1.right_stick_button&&!VLflag) {
+                Algorithm.SpinnerToCenter();
                 if(!result.nextMoveDirection.equals("None")&&!grasp.isWithinRange) {
                     GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
                     nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
@@ -223,7 +224,7 @@ public class TeleOp_27570 extends OpMode {
         }
         IntakeRotateLastFlag = gamepad1.triangle;
     }
-    private void ArmUpController(){
+    private void ArmUpController() throws InterruptedException {
         if(gamepad1.left_bumper&!ArmLastFlag){
             Algorithm.ArmController();
         }

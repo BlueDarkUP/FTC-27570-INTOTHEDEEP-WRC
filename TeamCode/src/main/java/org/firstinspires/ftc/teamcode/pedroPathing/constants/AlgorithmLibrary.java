@@ -54,8 +54,6 @@ public class AlgorithmLibrary {
         BigArm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm_forward.setDirection(Servo.Direction.REVERSE);
         forward_slide.setDirection(Servo.Direction.REVERSE);
-        intake_spinner.setDirection(Servo.Direction.REVERSE);
-
     }
     public void InitializeLift(){
         Left_Hanging_Motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -90,8 +88,9 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
     }
     public void Initialize_All_For_TeleOp() throws InterruptedException {
         //Initialize motor
@@ -113,13 +112,14 @@ public class AlgorithmLibrary {
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
         intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
     }
 
     public void Initialize_All_For_Vision() throws InterruptedException {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-        intake_rotate.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
@@ -134,14 +134,16 @@ public class AlgorithmLibrary {
     }
     public void SpinnerToCenter(){
         intake_spinner.setPosition(ConstantMap.Intake_spinner_Initial_Position);
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+        intake_rotate.setPosition(ConstantMap.Intake_rotate_Turned_Position);
     }
     public void performVisionGrasp(double sliderServoPosition, double turnServoPosition, double rotateServoPosition) throws InterruptedException {
         forward_slide.setPosition(sliderServoPosition);
         intake_spinner.setPosition(turnServoPosition);
-        intake_rotate.setPosition(rotateServoPosition);
-        Thread.sleep(50);
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
-        Thread.sleep(350);
+        Thread.sleep(140);
+        intake_rotate.setPosition(rotateServoPosition);
+        Thread.sleep(200);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
         Thread.sleep(160);
         ClawFlag = true;
@@ -154,13 +156,17 @@ public class AlgorithmLibrary {
         camera_arm.setPosition(0.113); // Or a constant*/
     }
 
-    public void ArmController(){
+    public void ArmController() throws InterruptedException {
         if(ArmFlag){
             BigArmMotorAction(ConstantMap.Big_Arm_Reset_Position);
             BackArm.setPosition(ConstantMap.BACK_ARM_RESET_POSITION);
             LiftAction(ConstantMap.Lift_Down_Position);
             ArmFlag=false;
             return;
+        }
+        if(!CameraArmFlag){
+            CameraArmController();
+            Thread.sleep(100);
         }
         LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
         BigArmMotorAction(ConstantMap.Big_Arm_Set_Position);
@@ -177,14 +183,14 @@ public class AlgorithmLibrary {
     }
     public void IntakeController() throws InterruptedException {
         if(ClawFlag) {
-            arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
-            Thread.sleep(60);
             ForwardGrabController();
-            Thread.sleep(110);
-            arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
             return;
         }
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
+        Thread.sleep(60);
         ForwardGrabController();
+        Thread.sleep(110);
+        arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
     }
     public void SpinnerController(){
         if(SpinnerFlag){
@@ -222,12 +228,15 @@ public class AlgorithmLibrary {
     }
     public void SlideController(){
         if(IntakeSlideFlag){
-            arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
+            arm_forward.setPosition(ConstantMap.Arm_Forward_Putdown_Position);
             forward_slide.setPosition(ConstantMap.Slide_In_Position);
             SpinnerController();
+            IntakeRotateFlag=true;
+            RotateController();
             IntakeSlideFlag=false;
             return;
         }
+        SpinnerFlag=true;
         SpinnerController();
         arm_forward.setPosition(ConstantMap.Arm_Forward_Up_Position);
         forward_slide.setPosition(ConstantMap.Slide_Out_Position);
