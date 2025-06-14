@@ -27,7 +27,7 @@ import org.firstinspires.ftc.teamcode.vision.VisionGraspingAPI;
 
 @TeleOp (name = "TeleOp-Code-27570-BLUE",group = "A111-Competition")
 
-public class TeleOp_27570 extends OpMode {
+public class TeleOp_27570_Blue extends OpMode {
     private static Follower follower;
     private AlgorithmLibrary Algorithm;
     private VisionGraspingAPI visionAPI;
