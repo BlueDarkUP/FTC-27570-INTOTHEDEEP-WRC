@@ -25,6 +25,7 @@ public class ServoTuning extends OpMode {
     AlgorithmLibrary Algorithm;
     private boolean Flag = false;
     private boolean LastFlag = false;
+    private double nowPosition = 0;
     private final Pose startPose = new Pose(0,0,0);
 
     /** This method is call once when init is played, it initializes the follower **/
@@ -32,7 +33,7 @@ public class ServoTuning extends OpMode {
     public void init() {
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
-        TuningServo = hardwareMap.get(Servo.class,"rotate_platform");
+        TuningServo = hardwareMap.get(Servo.class,"back_arm"/*change this to whatever you need*/);
         Algorithm = new AlgorithmLibrary(hardwareMap);
     }
 
@@ -72,9 +73,10 @@ public class ServoTuning extends OpMode {
         }
         LastFlag = gamepad1.a;
         */
-            TuningServo.setPosition(gamepad1.left_trigger);
+        nowPosition+= Math.pow(gamepad1.left_trigger - gamepad1.right_trigger,3);
+            TuningServo.setPosition(nowPosition);
         /* Telemetry Outputs of our Follower */
-       telemetry.addData("Servo value",gamepad1.left_trigger);
+       telemetry.addData("Servo value",nowPosition);
         /* Update Telemetry to the Driver Hub */
         telemetry.update();
 
