@@ -145,7 +145,7 @@ public class AlgorithmLibrary {
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
         Thread.sleep(120);
         intake_rotate.setPosition(rotateServoPosition);
-        Thread.sleep(170);
+        Thread.sleep(150);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
         Thread.sleep(160);
         ClawFlag = true;
@@ -186,6 +186,7 @@ public class AlgorithmLibrary {
     public void IntakeController() throws InterruptedException {
         if(ClawFlag) {
             ForwardGrabController();
+            SpinnerToCenter();
             return;
         }
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
