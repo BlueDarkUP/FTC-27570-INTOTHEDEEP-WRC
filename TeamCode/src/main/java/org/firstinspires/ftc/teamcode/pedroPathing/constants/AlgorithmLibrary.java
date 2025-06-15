@@ -186,7 +186,6 @@ public class AlgorithmLibrary {
     public void IntakeController() throws InterruptedException {
         if(ClawFlag) {
             ForwardGrabController();
-            SpinnerToCenter();
             return;
         }
         arm_forward.setPosition(ConstantMap.Arm_Forward_Down_Position);
@@ -207,6 +206,7 @@ public class AlgorithmLibrary {
     public void ForwardGrabController(){
         if(ClawFlag){
             forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
+            SpinnerToCenter();
             ClawFlag=false;
             return;
         }

@@ -174,6 +174,7 @@ public class TeleOp_27570_Blue extends OpMode {
                     }
                 }
                 follower.holdPoint(follower.getPose());
+                Thread.sleep(80);
                 VisionIntake();
                 follower.startTeleopDrive();
             }
