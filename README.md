@@ -79,8 +79,6 @@ The team has integrated and customized an advanced autonomous navigation system 
 - **抓取自动纠位**: 当使用视觉抓取样本时若目标不在可抓取范围内则会横向移动底盘使其进入可抓取范围（请勿在朝向不正确时运行，可能会导致过冲撞墙等未知危险！）。
 - **自动得分**: 先按下dpad右键以重新构建坐标系（注意准确性！这几乎无异于自动阶段前的摆车，朝向不正确或位置偏差过大会造成不小的影响！），再到得分点将所有挂在高杆上的标本全部推向左边，点击dpad右键即可开启自动得分，若出现任何异常立刻拨动左摇杆以接管自动驾驶，滑轨和大臂将会自动复位。
 - **紧急复位**: 由于开启程序时可能电机初始位置不一定是零位，点击触控板即可强行重置。
-Sure, here's a professional and well-formatted English translation of your README content:
-
 ## TeleOperated with Driver Assistance (`TeamCode/src/main/java/org/firstinspires/ftc/teamcode/pedroPathing/TeleOp`)
 
 Our team has developed L2 and L3 driver assistance programs within the `TeleOp` directory to adapt to various manual field environments. Their features and usage instructions are as follows:
