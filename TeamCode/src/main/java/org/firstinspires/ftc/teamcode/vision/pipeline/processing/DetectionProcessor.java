@@ -24,6 +24,9 @@ import java.util.List;
  * 此类将原始的、分散的检测信息（List<DetectedCube>）处理成一个结构化的、有明确指令的
  *    最终结果（VisionGraspingAPI.VisionTargetResult）。
  * 它完全与OpenCV的图像处理流程解耦，只处理已经检测到的数据。
+ * @author BlueDarkUP
+ * @version 2025/6 (Refactored)
+ * To My Lover - Zyy
  */
 public class DetectionProcessor {
 
