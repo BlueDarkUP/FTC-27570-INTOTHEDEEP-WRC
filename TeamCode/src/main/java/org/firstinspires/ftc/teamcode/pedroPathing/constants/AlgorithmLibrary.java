@@ -124,7 +124,7 @@ public class AlgorithmLibrary {
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
     }
 
-    public void AutoPilotInitializeHardware(){
+    public void AutoPilotInitializeHardware() throws InterruptedException {
         BackGrabFlag=true;
         ClawFlag=true;
         IntakeSlideFlag=true;
@@ -203,9 +203,10 @@ public class AlgorithmLibrary {
         intake_spinner.setPosition(ConstantMap.Intake_spinner_PutDown_Position);
         SpinnerFlag=true;
     }
-    public void ForwardGrabController(){
+    public void ForwardGrabController() throws InterruptedException {
         if(ClawFlag){
             forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
+            Thread.sleep(100);
             SpinnerToCenter();
             ClawFlag=false;
             return;

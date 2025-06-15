@@ -114,7 +114,7 @@ public class TeleOp_27570_Red extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y*Math.abs(gamepad1.left_stick_y), -gamepad1.left_stick_x*Math.abs(gamepad1.left_stick_x), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
+        follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
         follower.update();
 
         PoseNow = follower.getPose();
@@ -168,11 +168,13 @@ public class TeleOp_27570_Red extends OpMode {
                     while (follower.isBusy()) {
                         if(!Algorithm.AutoPilotBreak(gamepad1)){
                             Algorithm.followerReset(follower,follower.getPose());
-                            break;
+                            follower.startTeleopDrive();
+                            return;
                         }
                     }
                 }
                 follower.holdPoint(follower.getPose());
+                Thread.sleep(80);
                 VisionIntake();
                 follower.startTeleopDrive();
             }
