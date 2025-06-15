@@ -375,6 +375,7 @@ public class L3AutomaticTeleOp extends OpMode {
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if(grasp.isWithinRange){
+                follower.holdPoint(follower.getPose());
                 Algorithm.ClawFlag = true;
                 Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();

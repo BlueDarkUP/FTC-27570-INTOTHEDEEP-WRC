@@ -75,6 +75,13 @@ public class SpecAutoWithPathChain extends OpMode{
         Push3Together = follower.pathBuilder()
                 .addPath(new BezierCurve(new Point(FscorePose),new Point(Push1Control1Pose),new Point(Push1Control2Pose),new Point(Push1Control3Pose),new Point(Push1Control4Pose),new Point(Push1Control5Pose),new Point(Push1Pose)))
                 .setLinearHeadingInterpolation(FscorePose.getHeading(),Push1Pose.getHeading())
+                .addParametricCallback(0.5, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
 
                 .addPath(new BezierCurve(new Point(Push1Pose),new Point(Push2Control1Pose),new Point(Push2Control2Pose),new Point(Push2Control3Pose),new Point(Push2Pose)))
                 .setLinearHeadingInterpolation(Push1Pose.getHeading(),Push2Pose.getHeading())
@@ -116,6 +123,13 @@ public class SpecAutoWithPathChain extends OpMode{
                 .build();
         Getspec = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(scorePose),new Point(GetSpecPosition)))
+                .addParametricCallback(0.4, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
                 .build();
         park = new Path(new BezierCurve(new Point(scorePose),new Point(parkPose)));
@@ -148,8 +162,6 @@ public class SpecAutoWithPathChain extends OpMode{
                     Algorithm.BackGrabAction();
                     follower.followPath(Push3Together, true);
                     follower.update();
-                    Thread.sleep(1300);
-                    Algorithm.ArmController();
                     setPathState(6);
                     break;
                 }/*
@@ -177,12 +189,10 @@ public class SpecAutoWithPathChain extends OpMode{
                 //Scoring loop
             case 6:
                 if(!follower.isBusy()) {
-                    Thread.sleep(200);
                     Algorithm.BackGrabAction();
-                    Thread.sleep(100);
+                    Thread.sleep(170);
                     follower.followPath(Scoring,true);
                     follower.update();
-                    Thread.sleep(150);
                     Algorithm.ArmController();
                     Specnum += 1;
                     if (Specnum < 5) {
@@ -197,8 +207,6 @@ public class SpecAutoWithPathChain extends OpMode{
                     Algorithm.BackGrabAction();
                     follower.followPath(Getspec, true);
                     follower.update();
-                    Thread.sleep(1000);
-                    Algorithm.ArmController();
                     setPathState(6);
                     break;
                 }

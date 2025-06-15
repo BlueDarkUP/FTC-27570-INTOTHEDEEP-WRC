@@ -62,6 +62,13 @@ public class SpecAutoAllVision8 extends OpMode {
         GetSpec = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(scorePose), new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), GetSpecPosition.getHeading())
+                .addParametricCallback(0.4, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .build();
 
         Scoring = follower.pathBuilder()
@@ -103,7 +110,7 @@ public class SpecAutoAllVision8 extends OpMode {
                 follower.followPath(scorePreload, true);
                 follower.update();
                 Algorithm.CameraArmController();
-                //Algorithm.ArmController("Up");
+                Algorithm.ArmController();
 
                 setPathState(2);
                 break;
@@ -121,7 +128,6 @@ public class SpecAutoAllVision8 extends OpMode {
                     follower.followPath(GetSpec, true);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
-                    //Algorithm.ArmController("Down");
                     setPathState(3);
                     break;
                 }
@@ -133,7 +139,7 @@ public class SpecAutoAllVision8 extends OpMode {
                     follower.followPath(Scoring, true);
                     follower.update();
                     Algorithm.SpinnerToCenter();
-                    //Algorithm.ArmController("Up");
+                    Algorithm.ArmController();
                     Specnum++;
                     if (Specnum < 8) {
                         setPathState(2);
@@ -234,6 +240,7 @@ public class SpecAutoAllVision8 extends OpMode {
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if (grasp.isWithinRange) {
+                follower.holdPoint(follower.getPose());
                 Algorithm.ClawFlag = true;
                 Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();

@@ -168,7 +168,8 @@ public class TeleOp_27570_Blue extends OpMode {
                     while (follower.isBusy()) {
                         if(!Algorithm.AutoPilotBreak(gamepad1)){
                             Algorithm.followerReset(follower,follower.getPose());
-                            break;
+                            follower.startTeleopDrive();
+                            return;
                         }
                     }
                 }
