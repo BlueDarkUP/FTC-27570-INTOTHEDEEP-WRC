@@ -209,6 +209,7 @@ public class AlgorithmLibrary {
             Thread.sleep(100);
             SpinnerToCenter();
             ClawFlag=false;
+            IntakeSlideFlag=false;
             return;
         }
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
@@ -217,7 +218,7 @@ public class AlgorithmLibrary {
     public void RotateController(){
         if(IntakeRotateFlag) {
             intake_rotate.setPosition(ConstantMap.Intake_rotate_Initial_Position);
-            IntakeSlideFlag=false;
+            IntakeRotateFlag=false;
             return;
         }
         IntakeRotateFlag=true;
@@ -232,14 +233,15 @@ public class AlgorithmLibrary {
         back_grab.setPosition(ConstantMap.BackGrab_TightPosition);
         BackGrabFlag=true;
     }
-    public void SlideController(){
+    public void SlideController() throws InterruptedException {
         if(IntakeSlideFlag){
             arm_forward.setPosition(ConstantMap.Arm_Forward_Putdown_Position);
             forward_slide.setPosition(ConstantMap.Slide_In_Position);
-            SpinnerController();
             IntakeRotateFlag=true;
             RotateController();
             IntakeSlideFlag=false;
+            Thread.sleep((int)(300*forward_slide.getPosition()));
+            SpinnerController();
             return;
         }
         SpinnerFlag=true;

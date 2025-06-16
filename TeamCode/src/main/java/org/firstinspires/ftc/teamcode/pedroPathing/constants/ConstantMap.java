@@ -31,7 +31,7 @@ public class ConstantMap {
     public static final double BACK_ARM_RESET_POSITION = 0.15;
     public static final double BACK_ARM_INITIALIZE_POSITION = 0.06;
     //Lift position
-    public static final int Lift_Up_HighChamber_Position = 660;
+    public static final int Lift_Up_HighChamber_Position = 730;
     public static final int Lift_Up_Climb_Position = 1600;
     public static final int Lift_Down_Position = 0;
 

@@ -114,17 +114,17 @@ public class TeleOp_27570_Blue extends OpMode {
         - Robot-Centric Mode: true
         */
 
-        follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, true);
+        follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, false);
         follower.update();
 
         PoseNow = follower.getPose();
         BackGrabController();
         RotateController();
-        SlideController();
         EmergencyInitMotors();
         CameraArmController();
         ClimbController();
         try {
+            SlideController();
             VisionController();
             AutoScoringController();
             ForwardClawController();
@@ -216,7 +216,7 @@ public class TeleOp_27570_Blue extends OpMode {
         }
         ClawLastFlag = gamepad1.cross;
     }
-    private void SlideController(){
+    private void SlideController() throws InterruptedException {
         if(gamepad1.right_bumper&!IntakeSlideLastFlag){
             Algorithm.SlideController();
         }

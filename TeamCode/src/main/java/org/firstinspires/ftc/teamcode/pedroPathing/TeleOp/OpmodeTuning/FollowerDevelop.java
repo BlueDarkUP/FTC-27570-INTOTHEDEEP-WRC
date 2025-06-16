@@ -35,6 +35,8 @@ public class FollowerDevelop extends OpMode {
         follower = new Follower(hardwareMap,FConstants.class,LConstants.class);
         follower.setStartingPose(startPose);
         Algorithm= new AlgorithmLibrary(hardwareMap);
+        HoldFlag = new Switcher();
+        AutoFollowerFlag = new Switcher();
         visionAPI = new VisionGraspingAPI();
         visionAPI.init(hardwareMap, VisionGraspingAPI.AllianceColor.BLUE);
     }
@@ -90,21 +92,16 @@ public class FollowerDevelop extends OpMode {
 
     private void AutoPathTester(){
         if(gamepad1.circle&&!AutoFollowerFlag.LastFlag){
-            if(!AutoFollowerFlag.Flag){
-                BuildPath();
-                follower.followPath(ToCenter,true);
-                follower.update();
-                while(Algorithm.AutoPilotBreak(gamepad1)){
-                    telemetry.addData("X", follower.getPose().getX());
-                    telemetry.addData("Y", follower.getPose().getY());
-                    telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
-                    /* Update Telemetry to the Driver Hub */
-                    telemetry.update();
-                }
-            }else {
-                follower.startTeleopDrive();
+            BuildPath();
+            follower.followPath(ToCenter,true);
+            follower.update();
+            while(Algorithm.AutoPilotBreak(gamepad1)&&follower.isBusy()){
+                telemetry.addData("X", follower.getPose().getX());
+                telemetry.addData("Y", follower.getPose().getY());
+                telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
+                /* Update Telemetry to the Driver Hub */
+                telemetry.update();
             }
-            AutoFollowerFlag.Switch();
         }
         AutoFollowerFlag.RecordLF(gamepad1.circle);
     }

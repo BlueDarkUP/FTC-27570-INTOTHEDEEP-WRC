@@ -120,12 +120,12 @@ public class TeleOp_27570_Red extends OpMode {
         PoseNow = follower.getPose();
         BackGrabController();
         RotateController();
-        SlideController();
         EmergencyInitMotors();
         CameraArmController();
         ClimbController();
         try {
             VisionController();
+            SlideController();
             AutoScoringController();
             ForwardClawController();
             ArmUpController();
@@ -216,7 +216,7 @@ public class TeleOp_27570_Red extends OpMode {
         }
         ClawLastFlag = gamepad1.cross;
     }
-    private void SlideController(){
+    private void SlideController() throws InterruptedException {
         if(gamepad1.right_bumper&!IntakeSlideLastFlag){
             Algorithm.SlideController();
         }
