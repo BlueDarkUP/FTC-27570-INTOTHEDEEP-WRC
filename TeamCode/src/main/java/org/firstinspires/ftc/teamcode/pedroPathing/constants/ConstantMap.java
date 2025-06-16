@@ -40,7 +40,7 @@ public class ConstantMap {
     public static final double Slide_Out_Position = 0.9;
     //Arm forward position
     public static final double Arm_Forward_Initialize_Position = 0.9;
-    public static final double Arm_Forward_Putdown_Position = 0.65;
+    public static final double Arm_Forward_Putdown_Position = 0.73;
     public static final double Arm_Forward_Up_Position = 0.34;
     public static final double Arm_Forward_Down_Position = 0.19;
     //Forward claw position
@@ -51,7 +51,7 @@ public class ConstantMap {
     public static final double Intake_rotate_Initial_Position = 0.07;
     public static final double Intake_rotate_Turned_Position = 0.62;
     public static final double Intake_spinner_Initial_Position = 0.53;//PositionCalculator.calculatePositionValue(0.53, 1.00, 90, true, 90);
-    public static final double Intake_spinner_PutDown_Position = 0;
+    public static final double Intake_spinner_PutDown_Position = 0.1;
 
     public static final double Camera_Arm_Initialize_Position = 0.763;
     public static final double Camera_Arm_PutDown_Position = 0.10;

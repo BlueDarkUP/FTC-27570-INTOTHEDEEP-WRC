@@ -23,9 +23,9 @@ import java.util.Locale;
 public class GraspingCalculator {
 
     // --- 计算常量 ---
-    public static final double DISTANCE_CORRECTION_EXPONENT = 1.06;
+    public static final double DISTANCE_CORRECTION_EXPONENT = 1.015;
     public static final double DISTANCE_CORRECTION_REFERENCE_CM = 24.0;
-    public static final double LEFT_SIDE_AIM_CORRECTION_DEGREES = -15.0;
+    public static final double LEFT_SIDE_AIM_CORRECTION_DEGREES = -13.0;
     public static final double LATERAL_DISTANCE_ATTENUATION_FACTOR = 0.007;
 
     /**

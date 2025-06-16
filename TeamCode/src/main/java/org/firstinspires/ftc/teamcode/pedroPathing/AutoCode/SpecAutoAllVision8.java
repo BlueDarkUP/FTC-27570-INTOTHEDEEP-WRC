@@ -43,7 +43,8 @@ public class SpecAutoAllVision8 extends OpMode {
     private final Pose scorePose = new Pose(ConstantMap.ScorePoseX, ConstantMap.ScorePoseY_LeftTop, Math.toRadians(0));
 
 
-    private final Pose GetSpecPosition = new Pose(8.955, 31, Math.toRadians(0));
+    private final Pose GetSpecPosition = new Pose(9.05, 31, Math.toRadians(0));
+    private final Pose GetSpecControlPosition = new Pose(40,60);
     private final Pose parkPose = new Pose(10, 10, Math.toRadians(0));
 
     private int Specnum = 1;
@@ -60,8 +61,8 @@ public class SpecAutoAllVision8 extends OpMode {
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(scorePose), new Point(GetSpecPosition)))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), GetSpecPosition.getHeading())
+                .addPath(new BezierCurve(new Point(scorePose), new Point(GetSpecPosition)))
+                .setConstantHeadingInterpolation(0)
                 .addParametricCallback(0.4, () -> {
                     try {
                         Algorithm.ArmController();
@@ -73,7 +74,7 @@ public class SpecAutoAllVision8 extends OpMode {
 
         Scoring = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(GetSpecPosition), new Point(scorePose)))
-                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(), scorePose.getHeading())
+                .setConstantHeadingInterpolation(0)
                 .build();
 
         park = new Path(new BezierCurve(new Point(scorePose), new Point(parkPose)));
@@ -87,13 +88,20 @@ public class SpecAutoAllVision8 extends OpMode {
             ScorePoseNowY = 66;
         }
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY)), new Point(GetSpecPosition)))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), GetSpecPosition.getHeading())
+                .addPath(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY)), new Point(GetSpecPosition)))
+                .setConstantHeadingInterpolation(0)
+                .addParametricCallback(0.4, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .build();
 
         Scoring = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(GetSpecPosition), new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY))))
-                .setLinearHeadingInterpolation(GetSpecPosition.getHeading(), scorePose.getHeading())
+                .setConstantHeadingInterpolation(0)
                 .build();
         park = new Path(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY)), new Point(parkPose)));
         park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
@@ -125,6 +133,7 @@ public class SpecAutoAllVision8 extends OpMode {
                 if (!follower.isBusy()) {
                     Algorithm.BackGrabAction();
                     VisionIntake();
+                    Algorithm.CameraArmController();
                     follower.followPath(GetSpec, true);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
@@ -140,6 +149,7 @@ public class SpecAutoAllVision8 extends OpMode {
                     follower.update();
                     Algorithm.SpinnerToCenter();
                     Algorithm.ArmController();
+                    Algorithm.CameraArmController();
                     Specnum++;
                     if (Specnum < 8) {
                         setPathState(2);
@@ -151,6 +161,7 @@ public class SpecAutoAllVision8 extends OpMode {
             case 4:
                 if (!follower.isBusy()) {
                     Algorithm.BackGrabAction();
+                    Algorithm.CameraArmController();
                     follower.followPath(park, false);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
@@ -189,6 +200,7 @@ public class SpecAutoAllVision8 extends OpMode {
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading", follower.getPose().getHeading());
+        follower.drawOnDashBoard();
         telemetry.update();
     }
 
@@ -239,8 +251,9 @@ public class SpecAutoAllVision8 extends OpMode {
         VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
+            follower.holdPoint(follower.getPose());
+            Thread.sleep(100);
             if (grasp.isWithinRange) {
-                follower.holdPoint(follower.getPose());
                 Algorithm.ClawFlag = true;
                 Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();
@@ -252,11 +265,11 @@ public class SpecAutoAllVision8 extends OpMode {
             }
             if(!result.nextMoveDirection.equals("None")) {
                 GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
-                if(move.moveCm>0&&result.nextMoveDirection.equals("In Position")){
+                if(result.nextMoveDirection.equals("left") ||result.nextMoveDirection.equals("In Position")){
                     nextPointDistance=0;
                     return;
                 }
-                nextPointDistance = -move.moveCm * ConstantMap.CM_TO_INCH;
+                nextPointDistance = move.moveCm * ConstantMap.CM_TO_INCH;
             }
         }
     }

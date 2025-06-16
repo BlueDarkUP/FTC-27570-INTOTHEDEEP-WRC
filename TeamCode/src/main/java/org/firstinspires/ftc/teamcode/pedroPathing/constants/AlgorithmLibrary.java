@@ -83,7 +83,7 @@ public class AlgorithmLibrary {
         BigArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //Set servo position
-        back_grab.setPosition(ConstantMap.BackGrab_Initialize);
+        back_grab.setPosition(ConstantMap.BackGrab_TightPosition);
         BackArm.setPosition(ConstantMap.BACK_ARM_INITIALIZE_POSITION);
         arm_forward.setPosition(ConstantMap.Arm_Forward_Initialize_Position);
         forward_slide.setPosition(ConstantMap.Slide_In_Position);
@@ -147,7 +147,7 @@ public class AlgorithmLibrary {
         intake_rotate.setPosition(rotateServoPosition);
         Thread.sleep(150);
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
-        Thread.sleep(160);
+        Thread.sleep(200);
         ClawFlag = true;
         IntakeSlideFlag=true;
         /*
@@ -160,19 +160,21 @@ public class AlgorithmLibrary {
 
     public void ArmController() throws InterruptedException {
         if(ArmFlag){
+            /*
             BigArmMotorAction(ConstantMap.Big_Arm_Reset_Position);
             BackArm.setPosition(ConstantMap.BACK_ARM_RESET_POSITION);
             LiftAction(ConstantMap.Lift_Down_Position);
+             */
             ArmFlag=false;
             return;
         }
         if(!CameraArmFlag){
             CameraArmController();
             Thread.sleep(100);
-        }
+        }/*
         LiftAction(ConstantMap.Lift_Up_HighChamber_Position);
         BigArmMotorAction(ConstantMap.Big_Arm_Set_Position);
-        BackArm.setPosition(ConstantMap.BACK_ARM_SET_POSITION);
+        BackArm.setPosition(ConstantMap.BACK_ARM_SET_POSITION);*/
         ArmFlag=true;
     }
     public void CameraArmController(){

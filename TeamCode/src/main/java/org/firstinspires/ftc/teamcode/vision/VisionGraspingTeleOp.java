@@ -22,7 +22,7 @@ import java.util.Locale;
  */
 @TeleOp(name="Vision Grasping TeleOp", group="Main")
 public class VisionGraspingTeleOp extends LinearOpMode {
-    private static final VisionGraspingAPI.AllianceColor TARGET_COLOR = VisionGraspingAPI.AllianceColor.BLUE; // 可选项: .RED 或 .BLUE
+    private static final VisionGraspingAPI.AllianceColor TARGET_COLOR = VisionGraspingAPI.AllianceColor.RED; // 可选项: .RED 或 .BLUE
 
 
     private VisionGraspingAPI visionAPI;
