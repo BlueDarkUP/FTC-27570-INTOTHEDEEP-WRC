@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.TeleOp.OpmodeTuning;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.localization.Localizer;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.PathChain;
+import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Constants;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -60,7 +62,11 @@ public class FollowerDevelop extends OpMode {
         - Robot-Centric Mode: true
         */
         HoldPoseTester();
-        AutoPathTester();
+        try {
+            AutoPathTester();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
         follower.update();
 
@@ -79,29 +85,41 @@ public class FollowerDevelop extends OpMode {
     }
     private void HoldPoseTester(){
         if(gamepad1.cross&&!HoldFlag.LastFlag) {
-            if (HoldFlag.Flag) {
-                follower.startTeleopDrive();
-            }else {
-                follower.holdPoint(follower.getPose());
+                Pose nowPose = follower.getPose();
+                follower.holdPoint(nowPose);
+                follower.update();
                 telemetry.addLine("Holding Point");
+                telemetry.update();
+                while(!gamepad1.cross) {
+                    follower.holdPoint(nowPose);
+                    follower.update();
+                }
+                follower.startTeleopDrive();
+                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
+                follower.update();
             }
-            HoldFlag.Switch();
-        }
+
         HoldFlag.RecordLF(gamepad1.cross);
     }
 
-    private void AutoPathTester(){
+    private void AutoPathTester() throws InterruptedException {
         if(gamepad1.circle&&!AutoFollowerFlag.LastFlag){
             BuildPath();
             follower.followPath(ToCenter,true);
             follower.update();
-            while(Algorithm.AutoPilotBreak(gamepad1)&&follower.isBusy()){
+            while(Algorithm.AutoPilotBreak(gamepad1)&&!follower.atParametricEnd()){
+                follower.update();
                 telemetry.addData("X", follower.getPose().getX());
                 telemetry.addData("Y", follower.getPose().getY());
                 telemetry.addData("Heading in Degrees", Math.toDegrees(follower.getPose().getHeading()));
                 /* Update Telemetry to the Driver Hub */
                 telemetry.update();
             }
+            follower.holdPoint(new Pose(0,0,0));
+            Thread.sleep(120);
+            follower.startTeleopDrive();
+            follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, true);
+            follower.update();
         }
         AutoFollowerFlag.RecordLF(gamepad1.circle);
     }

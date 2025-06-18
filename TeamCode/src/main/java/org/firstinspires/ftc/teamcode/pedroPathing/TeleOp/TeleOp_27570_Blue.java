@@ -32,7 +32,7 @@ public class TeleOp_27570_Blue extends OpMode {
     private AlgorithmLibrary Algorithm;
     private VisionGraspingAPI visionAPI;
     private boolean BackGrabLastFlag=false,IntakeRotateLastFlag=false;
-    private boolean ClawLastFlag=false,IntakeSlideLastFlag = false;
+    private boolean ClawLastFlag=false,IntakeSlideLastFlag = false,SpinnerLastFlag = false;
     private boolean ArmLastFlag = false,CameraArmLastFlag = false;
     private boolean buildAutoScoring1LastFlag = false;
     private boolean buildAutoScoring2LastFlag = false;
@@ -46,9 +46,9 @@ public class TeleOp_27570_Blue extends OpMode {
     private final Pose GetSpecPosition = new Pose(8.955,31,Math.toRadians(0));
     private static Pose ScoringInitialPosition = new Pose();
     private PathChain ToIntake,Scoring,GetSpec;
-    private boolean Eflag1 = false,Eflag2 = false;
+    private boolean Eflag1 = false,Eflag2 = false,ResetFlag = false;
 
-    private ElapsedTime Emergencytimer1 = new ElapsedTime(),Emergencytimer2 = new ElapsedTime();
+    private ElapsedTime Emergencytimer1 = new ElapsedTime(),Emergencytimer2 = new ElapsedTime(),holdPointTImer;
 
     private Timer opmodeTimer;
     private final Pose startPose = new Pose(10,7.8,0);
@@ -77,6 +77,8 @@ public class TeleOp_27570_Blue extends OpMode {
     @Override
     public void init() {
         opmodeTimer = new Timer();
+        holdPointTImer = new ElapsedTime();
+        holdPointTImer.reset();
         opmodeTimer.resetTimer();
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
@@ -124,10 +126,13 @@ public class TeleOp_27570_Blue extends OpMode {
         CameraArmController();
         ClimbController();
         try {
+            ResetHeading();
             SlideController();
             VisionController();
             AutoScoringController();
+            SpinnerResetController();
             ForwardClawController();
+            ResetHeading();
             ArmUpController();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -154,7 +159,9 @@ public class TeleOp_27570_Blue extends OpMode {
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
             if(gamepad1.right_stick_button&&!VLflag) {
+                Pose nowPose = follower.getPose();
                 Algorithm.SpinnerToCenter();
+                /*
                 if(!result.nextMoveDirection.equals("None")&&!grasp.isWithinRange) {
                     GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
                     nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
@@ -165,18 +172,26 @@ public class TeleOp_27570_Blue extends OpMode {
                     Algorithm.BackGrabFlag = true;
                     Algorithm.BackGrabAction();
                     Algorithm.ForwardGrabController();
-                    while (follower.isBusy()) {
+                    while (!follower.atParametricEnd()) {
                         if(!Algorithm.AutoPilotBreak(gamepad1)){
                             Algorithm.followerReset(follower,follower.getPose());
                             follower.startTeleopDrive();
                             return;
                         }
                     }
+                }*/
+                follower.holdPoint(nowPose);
+                follower.update();
+                holdPointTImer.reset();
+                while(holdPointTImer.milliseconds()<220){
+                    follower.holdPoint(nowPose);
+                    follower.update();
                 }
-                follower.holdPoint(follower.getPose());
-                Thread.sleep(80);
-                VisionIntake();
                 follower.startTeleopDrive();
+                follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, false);
+                follower.update();
+                VisionIntake();
+
             }
             VLflag = gamepad1.right_stick_button;
         }
@@ -200,8 +215,13 @@ public class TeleOp_27570_Blue extends OpMode {
         if(gamepad1.dpad_down&&!CameraArmLastFlag){
             Algorithm.CameraArmController();
         }
-
         CameraArmLastFlag = gamepad1.dpad_down;
+    }
+    private void ResetHeading() throws InterruptedException {
+        if(gamepad1.dpad_up&&!ResetFlag){
+            follower.setPose(new Pose(0,0,0));
+        }
+        ResetFlag=gamepad1.dpad_up;
     }
     private void BackGrabController(){
         if(gamepad1.square&&!BackGrabLastFlag){
@@ -215,6 +235,18 @@ public class TeleOp_27570_Blue extends OpMode {
             Algorithm.IntakeController();
         }
         ClawLastFlag = gamepad1.cross;
+    }
+    private void SpinnerResetController() throws InterruptedException {
+        if(gamepad1.circle&&!SpinnerLastFlag){
+            if(Algorithm.SpinnerFlag) {
+                Algorithm.SpinnerToCenter();
+                Algorithm.SpinnerFlag=false;
+            }else {
+                Algorithm.IntakeSlideFlag=true;
+                Algorithm.SlideController();
+            }
+        }
+        SpinnerLastFlag=gamepad1.circle;
     }
     private void SlideController() throws InterruptedException {
         if(gamepad1.right_bumper&!IntakeSlideLastFlag){
@@ -247,12 +279,12 @@ public class TeleOp_27570_Blue extends OpMode {
             PathBuilderScoring();
             Algorithm.AutoPilotInitializeHardware();
             while(Algorithm.AutoPilotBreak(gamepad1)){
-                if(!follower.isBusy()) {
+                if(follower.atParametricEnd()) {
                     if (scOrGeFLag) {
                         Algorithm.ForwardGrabController();
                         Algorithm.BackGrabAction();
                         Thread.sleep(150);
-                        follower.followPath(Scoring);
+                        follower.followPath(Scoring,true);
                         follower.update();
                         scOrGeFLag = false;
                         Thread.sleep(500);
@@ -261,7 +293,7 @@ public class TeleOp_27570_Blue extends OpMode {
                     }
                     Algorithm.BackGrabAction();
                     VisionIntake();
-                    follower.followPath(GetSpec);
+                    follower.followPath(GetSpec,true);
                     follower.update();
                     scOrGeFLag = true;
                     PathBuilderScoring();
@@ -270,6 +302,9 @@ public class TeleOp_27570_Blue extends OpMode {
             RebuildMapIsReady = false;
             Algorithm.SlideController();
             Algorithm.ArmController();
+            follower.startTeleopDrive();
+            follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, false);
+            follower.update();
         }
 
         buildAutoScoring2LastFlag = gamepad1.dpad_left;

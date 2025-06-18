@@ -46,7 +46,7 @@ public class ConstantMap {
     //Forward claw position
     public static final double ForwardClaw_Tight_Position = 0.5;
     public static final double ForwardClaw_Lax_Position = 0.37;
-    public static final double ForwardClaw_Initialize_Position = 0;
+    public static final double ForwardClaw_Initialize_Position = 0.1;
     //Intake rotation
     public static final double Intake_rotate_Initial_Position = 0.07;
     public static final double Intake_rotate_Turned_Position = 0.62;

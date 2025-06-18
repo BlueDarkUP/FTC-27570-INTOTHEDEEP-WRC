@@ -43,7 +43,7 @@ public class SpecAutoAllVision8 extends OpMode {
     private final Pose scorePose = new Pose(ConstantMap.ScorePoseX, ConstantMap.ScorePoseY_LeftTop, Math.toRadians(0));
 
 
-    private final Pose GetSpecPosition = new Pose(9.05, 31, Math.toRadians(0));
+    private final Pose GetSpecPosition = new Pose(9, 31, Math.toRadians(0));
     private final Pose GetSpecControlPosition = new Pose(40,60);
     private final Pose parkPose = new Pose(10, 10, Math.toRadians(0));
 
@@ -61,7 +61,7 @@ public class SpecAutoAllVision8 extends OpMode {
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(scorePose), new Point(GetSpecPosition)))
+                .addPath(new BezierLine(new Point(scorePose), new Point(GetSpecPosition)))
                 .setConstantHeadingInterpolation(0)
                 .addParametricCallback(0.4, () -> {
                     try {
@@ -84,11 +84,12 @@ public class SpecAutoAllVision8 extends OpMode {
     public void buildNextPath() {
         ScorePoseNowY = ScorePoseNowY - nextPointDistance;
         //Limit the minimum position in case the robot hit he frame
+        nextPointDistance=0;
         if (ScorePoseNowY < 66) {
             ScorePoseNowY = 66;
         }
         GetSpec = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY)), new Point(GetSpecPosition)))
+                .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX, ScorePoseNowY)), new Point(GetSpecPosition)))
                 .setConstantHeadingInterpolation(0)
                 .addParametricCallback(0.4, () -> {
                     try {
@@ -251,7 +252,7 @@ public class SpecAutoAllVision8 extends OpMode {
         VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
-            follower.holdPoint(follower.getPose());
+            follower.holdPoint(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY,0));
             Thread.sleep(100);
             if (grasp.isWithinRange) {
                 Algorithm.ClawFlag = true;
@@ -269,8 +270,9 @@ public class SpecAutoAllVision8 extends OpMode {
                     nextPointDistance=0;
                     return;
                 }
-                nextPointDistance = move.moveCm * ConstantMap.CM_TO_INCH;
+                nextPointDistance = -move.moveCm * ConstantMap.CM_TO_INCH;
             }
+            follower.resumePathFollowing();
         }
     }
 }

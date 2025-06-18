@@ -61,7 +61,6 @@ public class AlgorithmLibrary {
 
         Left_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Right_Hanging_Motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         Left_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Right_Hanging_Motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
@@ -168,7 +167,7 @@ public class AlgorithmLibrary {
             ArmFlag=false;
             return;
         }
-        if(!CameraArmFlag){
+        /*if(!CameraArmFlag){
             CameraArmController();
             Thread.sleep(100);
         }/*
@@ -181,6 +180,7 @@ public class AlgorithmLibrary {
         if(CameraArmFlag) {
             camera_arm.setPosition(ConstantMap.Camera_Arm_Initialize_Position);
             CameraArmFlag=false;
+            return;
         }
         camera_arm.setPosition(ConstantMap.Camera_Arm_PutDown_Position);
         CameraArmFlag=true;
@@ -208,10 +208,7 @@ public class AlgorithmLibrary {
     public void ForwardGrabController() throws InterruptedException {
         if(ClawFlag){
             forward_claw.setPosition(ConstantMap.ForwardClaw_Initialize_Position);
-            Thread.sleep(100);
-            SpinnerToCenter();
             ClawFlag=false;
-            IntakeSlideFlag=false;
             return;
         }
         forward_claw.setPosition(ConstantMap.ForwardClaw_Tight_Position);
@@ -243,6 +240,7 @@ public class AlgorithmLibrary {
             RotateController();
             IntakeSlideFlag=false;
             Thread.sleep((int)(300*forward_slide.getPosition()));
+            SpinnerFlag=false;
             SpinnerController();
             return;
         }
