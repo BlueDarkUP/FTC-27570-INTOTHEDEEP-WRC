@@ -11,6 +11,7 @@ import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
@@ -31,6 +32,7 @@ public class SpecAutoAllVision8 extends OpMode {
     private AlgorithmLibrary Algorithm;
     public static VisionGraspingAPI visionAPI;
     private static double ScorePoseNowY = ConstantMap.ScorePoseY_LeftTop;
+    private ElapsedTime HoldTimer;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     /**
@@ -137,7 +139,6 @@ public class SpecAutoAllVision8 extends OpMode {
                     Algorithm.CameraArmController();
                     follower.followPath(GetSpec, true);
                     follower.update();
-                    Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     setPathState(3);
                     break;
                 }
@@ -145,12 +146,16 @@ public class SpecAutoAllVision8 extends OpMode {
                 if (!follower.isBusy()) {
                     Algorithm.ForwardGrabController();
                     Algorithm.BackGrabAction();
+                    Algorithm.SpinnerToCenter();
                     buildNextPath();
                     follower.followPath(Scoring, true);
                     follower.update();
                     Algorithm.SpinnerToCenter();
+                    follower.update();
                     Algorithm.ArmController();
+                    follower.update();
                     Algorithm.CameraArmController();
+                    follower.update();
                     Specnum++;
                     if (Specnum < 8) {
                         setPathState(2);
@@ -165,7 +170,6 @@ public class SpecAutoAllVision8 extends OpMode {
                     Algorithm.CameraArmController();
                     follower.followPath(park, false);
                     follower.update();
-                    Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController();
                     setPathState(-1);
                     break;
@@ -220,6 +224,8 @@ public class SpecAutoAllVision8 extends OpMode {
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
         buildPaths();
+        HoldTimer = new ElapsedTime();
+        HoldTimer.reset();
     }
 
     /**
@@ -249,11 +255,17 @@ public class SpecAutoAllVision8 extends OpMode {
     }
 
     private void VisionIntake() throws InterruptedException {
+        HoldTimer.reset();
+        follower.holdPoint(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY,0));
+        follower.update();
+        while(!follower.atPose(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY,0),0.4,0.3)&&HoldTimer.milliseconds()<150){
+            follower.update();
+        }
         VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
-            follower.holdPoint(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY,0));
-            Thread.sleep(100);
+            follower.update();
+
             if (grasp.isWithinRange) {
                 Algorithm.ClawFlag = true;
                 Algorithm.BackGrabFlag = true;
@@ -266,13 +278,12 @@ public class SpecAutoAllVision8 extends OpMode {
             }
             if(!result.nextMoveDirection.equals("None")) {
                 GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
-                if(result.nextMoveDirection.equals("left") ||result.nextMoveDirection.equals("In Position")){
-                    nextPointDistance=0;
+                if (result.nextMoveDirection.equals("left") || result.nextMoveDirection.equals("In Position")) {
+                    nextPointDistance = 0;
                     return;
                 }
-                nextPointDistance = -move.moveCm * ConstantMap.CM_TO_INCH;
+                nextPointDistance = move.moveCm * ConstantMap.CM_TO_INCH;
             }
-            follower.resumePathFollowing();
         }
     }
 }

@@ -28,7 +28,7 @@ public class ConstantMap {
 
     //Back arm position
     public static final double BACK_ARM_SET_POSITION =  0.85;
-    public static final double BACK_ARM_RESET_POSITION = 0.15;
+    public static final double BACK_ARM_RESET_POSITION = 0.11;
     public static final double BACK_ARM_INITIALIZE_POSITION = 0.06;
     //Lift position
     public static final int Lift_Up_HighChamber_Position = 730;
@@ -41,7 +41,7 @@ public class ConstantMap {
     //Arm forward position
     public static final double Arm_Forward_Initialize_Position = 0.9;
     public static final double Arm_Forward_Putdown_Position = 0.73;
-    public static final double Arm_Forward_Up_Position = 0.34;
+    public static final double Arm_Forward_Up_Position = 0.27;
     public static final double Arm_Forward_Down_Position = 0.19;
     //Forward claw position
     public static final double ForwardClaw_Tight_Position = 0.5;

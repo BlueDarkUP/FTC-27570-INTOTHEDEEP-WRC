@@ -161,6 +161,7 @@ public class TeleOp_27570_Blue extends OpMode {
             if(gamepad1.right_stick_button&&!VLflag) {
                 Pose nowPose = follower.getPose();
                 Algorithm.SpinnerToCenter();
+                follower.breakFollowing();
                 /*
                 if(!result.nextMoveDirection.equals("None")&&!grasp.isWithinRange) {
                     GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
@@ -183,14 +184,14 @@ public class TeleOp_27570_Blue extends OpMode {
                 follower.holdPoint(nowPose);
                 follower.update();
                 holdPointTImer.reset();
-                while(holdPointTImer.milliseconds()<220){
-                    follower.holdPoint(nowPose);
+                while(!follower.atPose(nowPose,0.3,0.3)&&holdPointTImer.milliseconds()<180||holdPointTImer.milliseconds()<80){
                     follower.update();
                 }
+                follower.breakFollowing();
+                VisionIntake();
                 follower.startTeleopDrive();
                 follower.setTeleOpMovementVectors(Math.pow(-gamepad1.left_stick_y,3), Math.pow(-gamepad1.left_stick_x,3), +gamepad1.left_trigger*gamepad1.left_trigger-gamepad1.right_trigger*gamepad1.right_trigger, false);
                 follower.update();
-                VisionIntake();
 
             }
             VLflag = gamepad1.right_stick_button;

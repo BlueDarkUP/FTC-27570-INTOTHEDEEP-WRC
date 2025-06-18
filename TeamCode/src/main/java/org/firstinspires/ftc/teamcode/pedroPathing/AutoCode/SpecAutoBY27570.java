@@ -11,6 +11,8 @@ import com.pedropathing.pathgen.Point;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.FConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.constants.LConstants;
@@ -30,6 +32,7 @@ public class SpecAutoBY27570 extends OpMode{
     private Follower follower;
     private AlgorithmLibrary Algorithm;
     public static VisionGraspingAPI visionAPI;
+    private ElapsedTime HoldTimer;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private static double ScorePoseNowY = ConstantMap.ScorePoseY_LeftTop;
 
@@ -80,6 +83,13 @@ public class SpecAutoBY27570 extends OpMode{
         Put3rdSpecPath = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(scorePose),new Point(Put3rdSpecPose)))
                 .setLinearHeadingInterpolation(scorePose.getHeading(),Put3rdSpecPose.getHeading())
+                .addParametricCallback(0.4, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .build();
         Get1SpecPath = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(Put3rdSpecPose),new Point(PickUp1Pose)))
@@ -110,6 +120,13 @@ public class SpecAutoBY27570 extends OpMode{
         GetSpec = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(new Pose(ConstantMap.ScorePoseX,ScorePoseNowY)),new Point(GetSpecPosition)))
                 .setLinearHeadingInterpolation(scorePose.getHeading(),GetSpecPosition.getHeading())
+                .addParametricCallback(0.4, () -> {
+                    try {
+                        Algorithm.ArmController();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .build();
 
         Scoring= follower.pathBuilder()
@@ -127,6 +144,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 0:
                 follower.followPath(scorePreload,true);
                 follower.update();
+                Algorithm.CameraArmController();
                 //Algorithm.ArmController("Up");
                 setPathState(1);
                 break;
@@ -135,13 +153,13 @@ public class SpecAutoBY27570 extends OpMode{
                     Algorithm.BackGrabAction();
                     VisionIntake();
                     Specnum++;
+                    Algorithm.CameraArmController();
                     if(Specnum>=3) {
                         setPathState(3);
                         break;
                     }
                     follower.followPath(GetSpec,true);
                     follower.update();
-                    buildNextPath();
                     //Algorithm.SlideController("Back");
                     setPathState(2);
                     break;
@@ -149,9 +167,12 @@ public class SpecAutoBY27570 extends OpMode{
             case 2:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController();
+                    Algorithm.SpinnerToCenter();
+                    buildNextPath();
                     //Algorithm.BackGrabAction(ConstantMap.BackGrab_TightPosition);
                     follower.followPath(Scoring,true);
                     follower.update();
+                    Algorithm.CameraArmController();
                     //Algorithm.ArmController("Up");
                     setPathState(1);
                     break;
@@ -161,16 +182,16 @@ public class SpecAutoBY27570 extends OpMode{
                     follower.followPath(Put3rdSpecPath,true);
                     follower.update();
                     buildNextPath();
-                    //Algorithm.SlideController("Back");
-                    Thread.sleep(ConstantMap.SleepMSAfterScoring);
                     //Algorithm.ArmController("Down");
                     setPathState(4);
                 }
             case 4:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController();
+                    Algorithm.SpinnerToCenter();
                     follower.followPath(Get1SpecPath,true);
                     follower.update();
+                    Algorithm.CameraArmController();
                     setPathState(5);
                     break;
                 }
@@ -185,6 +206,7 @@ public class SpecAutoBY27570 extends OpMode{
             case 6:
                 if(!follower.isBusy()){
                     Algorithm.ForwardGrabController();
+                    Algorithm.SpinnerToCenter();
                     follower.followPath(Get2SpecPath,true);
                     follower.update();
                     setPathState(7);
@@ -195,13 +217,13 @@ public class SpecAutoBY27570 extends OpMode{
                     VisionIntake();
                     follower.followPath(Put2SpecPath,true);
                     follower.update();
+                    Algorithm.CameraArmController();
                     setPathState(9);
                     break;
                 }
             case 8:
                 if(!follower.isBusy()) {
                     Algorithm.BackGrabAction();
-                    VisionIntake();
                     follower.followPath(GetSpec,true);
                     follower.update();
                     setPathState(9);
@@ -211,6 +233,7 @@ public class SpecAutoBY27570 extends OpMode{
                 if(!follower.isBusy()){
                     Algorithm.BackGrabAction();
                     Algorithm.ForwardGrabController();
+                    Algorithm.SpinnerToCenter();
                     follower.followPath(Scoring,true);
                     follower.update();
                     Algorithm.ArmController();
@@ -228,6 +251,7 @@ public class SpecAutoBY27570 extends OpMode{
                     follower.followPath(park,false);
                     follower.update();
                     Thread.sleep(ConstantMap.SleepMSAfterScoring);
+                    follower.update();
                     Algorithm.ArmController();
                     setPathState(-1);
                     break;
@@ -270,10 +294,12 @@ public class SpecAutoBY27570 extends OpMode{
         opmodeTimer.resetTimer();
         Algorithm = new AlgorithmLibrary(hardwareMap);
         Algorithm.Initialize_All_For_Autonomous();
-
+        HoldTimer = new ElapsedTime();
+        HoldTimer.reset();
         follower = new Follower(hardwareMap, FConstants.class, LConstants.class);
         follower.setStartingPose(startPose);
-
+        visionAPI = new VisionGraspingAPI();
+        visionAPI.init(hardwareMap, VisionGraspingAPI.AllianceColor.BLUE);
         buildPaths();
     }
 
@@ -296,27 +322,35 @@ public class SpecAutoBY27570 extends OpMode{
             visionAPI.close();
     }
     private void VisionIntake() throws InterruptedException {
+        HoldTimer.reset();
+        Pose Posenow = follower.getPose();
+        follower.holdPoint(Posenow);
+        follower.update();
+        while(!follower.atPose(Posenow,0.4,0.3)&&HoldTimer.milliseconds()<150||HoldTimer.milliseconds()>80){
+            follower.update();
+        }
         VisionGraspingAPI.VisionTargetResult result = visionAPI.getLatestResult();
         if (result.isTargetFound) {
             GraspingCalculator.GraspCalculations grasp = GraspingCalculator.calculateGrasp(result);
-            if(grasp.isWithinRange){
-                follower.holdPoint(follower.getPose());
+            follower.update();
+            if (grasp.isWithinRange) {
                 Algorithm.ClawFlag = true;
                 Algorithm.BackGrabFlag = true;
                 Algorithm.BackGrabAction();
                 Algorithm.ForwardGrabController();
                 Algorithm.performVisionGrasp(grasp.sliderServoPos, grasp.turnServoPos, grasp.rotateServoPos);
-                Algorithm.IntakeSlideFlag=true;
+                Thread.sleep(50);
+                Algorithm.IntakeSlideFlag = true;
                 Algorithm.SlideController();
             }
-        }
-        if(!result.nextMoveDirection.equals("None")) {
-            GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
-            if(move.moveCm>0){
-                nextPointDistance=0;
-                return;
+            if(!result.nextMoveDirection.equals("None")) {
+                GraspingCalculator.MoveSuggestion move = GraspingCalculator.calculateMove(result);
+                if (result.nextMoveDirection.equals("left") || result.nextMoveDirection.equals("In Position")) {
+                    nextPointDistance = 0;
+                    return;
+                }
+                nextPointDistance = move.moveCm * ConstantMap.CM_TO_INCH;
             }
-            nextPointDistance = -move.moveCm* ConstantMap.CM_TO_INCH;
         }
     }
 }
